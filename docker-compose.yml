@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ebike
+      POSTGRES_PASSWORD: ebike_dev
+      POSTGRES_DB: ebike_tucson
+    # Host 5433: evita choque con PostgreSQL instalado en Windows (suele ocupar 5432).
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

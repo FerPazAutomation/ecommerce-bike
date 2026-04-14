@@ -1,0 +1,14 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+backend/tests/e2e/artifacts/
+.coverage
+htmlcov/
+node_modules/
+frontend/dist/
+.env
+backend/.env
+frontend/.env
+*.egg-info/

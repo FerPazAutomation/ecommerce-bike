@@ -1,0 +1,6 @@
+﻿# Bytecode y caché: binarios que el editor no puede abrir como texto
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+.pytest_cache/
+*.egg-info/
