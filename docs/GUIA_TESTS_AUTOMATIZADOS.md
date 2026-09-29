@@ -6,6 +6,41 @@ Este documento explica **por qué** conviene automatizar pruebas, **qué estruct
 
 ---
 
+## 0. Estado actual en ecommerce-bike (léeme primero)
+
+La práctica activa de E2E/API contra el stack real está en **`e2e/`** con **Playwright + TypeScript** (no pytest-playwright). Los tests de integración **in-process** del backend siguen en **pytest** (`backend/tests/`).
+
+| Pieza | Dónde | Comando |
+|-------|--------|---------|
+| Integración API (SQLite) | `backend/tests/integration/` | `cd backend` → `pytest -m integration` |
+| Smoke API + E2E UI | `e2e/tests/api/`, `e2e/tests/ui/` | `cd e2e` → `npm run test:api` / `npm test` |
+| Datos de usuarios | `e2e/data/users.ts` | Importar en los specs |
+
+**Enlaces locales**
+
+| Qué | URL |
+|-----|-----|
+| Tienda | http://localhost:5173 |
+| Salud | http://127.0.0.1:8000/health |
+| Swagger | http://127.0.0.1:8000/docs |
+| ReDoc | http://127.0.0.1:8000/redoc |
+
+**Usuario demo** (después de `python -m scripts.seed` en `backend/`): `demo@example.com` / `demo1234`
+
+Estructura Playwright TS:
+
+```
+e2e/
+  playwright.config.ts     # projects: api (:8000) y ui (:5173)
+  data/users.ts            # credenciales y factories
+  tests/api/*.spec.ts      # request API (health, auth, …)
+  tests/ui/*.spec.ts       # navegador + POM (próximos pasos)
+```
+
+El resto de esta guía (secciones 1+) sigue siendo válida como **mapa conceptual** (pirámide, pytest, CI, Datadog). Para el día a día de la rebuild Option A, usá la carpeta `e2e/` y [`GUIA_TESTERS.md`](GUIA_TESTERS.md).
+
+---
+
 ## 1. Por qué automatizar tests
 
 | Motivo | Qué ganas |

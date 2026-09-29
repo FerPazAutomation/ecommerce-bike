@@ -96,7 +96,19 @@ Para que el pedido pase a estado pagado tras pagar con la tarjeta de prueba `424
 |-----|----------------|
 | Tienda | http://localhost:5173 |
 | Salud API | http://127.0.0.1:8000/health → `{"status":"ok"}` |
-| Documentación API | http://127.0.0.1:8000/docs |
+| **Swagger** | http://127.0.0.1:8000/docs |
+| ReDoc | http://127.0.0.1:8000/redoc |
+
+## Usuario demo (login / Swagger / tests)
+
+Tras el seed (`python -m scripts.seed` desde `backend/`):
+
+| Campo | Valor |
+|-------|--------|
+| Email | `demo@example.com` |
+| Password | `demo1234` |
+
+En Swagger: `POST /auth/login` → **Authorize** con el `access_token`. Más detalle: [`GUIA_TESTERS.md`](GUIA_TESTERS.md).
 
 ## Problemas frecuentes
 

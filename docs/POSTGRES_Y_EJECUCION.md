@@ -72,9 +72,12 @@ CREATE DATABASE ebike_tucson OWNER ebike;
 |-----|-----|
 | Tienda (UI) | http://localhost:5173 |
 | API | http://127.0.0.1:8000/health |
-| Documentación interactiva | http://127.0.0.1:8000/docs |
+| Swagger | http://127.0.0.1:8000/docs |
+| ReDoc | http://127.0.0.1:8000/redoc |
 
 Si `/health` devuelve `{"status":"ok"}`, la API y PostgreSQL están bien.
+
+**Usuario demo** (seed): `demo@example.com` / `demo1234` — ver [`GUIA_TESTERS.md`](GUIA_TESTERS.md).
 
 ## Nota sobre la instalación por winget
 

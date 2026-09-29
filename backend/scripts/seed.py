@@ -262,6 +262,39 @@ def build_products_from_scan() -> list[tuple[str, str, str, str, Decimal, int, i
     return rows
 
 
+# Email con dominio válido para EmailStr / email-validator (.test es reserved y falla en login).
+DEMO_EMAIL = "demo@example.com"
+DEMO_PASSWORD = "demo1234"
+LEGACY_DEMO_EMAIL = "demo@ebiketucson.test"
+
+
+def ensure_demo_user(db) -> None:
+    """Crea o actualiza el usuario demo (idempotente; también migra el email legacy)."""
+    hashed = hash_password(DEMO_PASSWORD)
+    user = (
+        db.query(User)
+        .filter(User.email.in_([DEMO_EMAIL, LEGACY_DEMO_EMAIL]))
+        .first()
+    )
+    if user:
+        user.email = DEMO_EMAIL
+        user.hashed_password = hashed
+        user.full_name = user.full_name or "Demo Shopper"
+        user.is_active = True
+        print(f"Demo user ready: {DEMO_EMAIL} / {DEMO_PASSWORD}")
+        return
+
+    db.add(
+        User(
+            email=DEMO_EMAIL,
+            hashed_password=hashed,
+            full_name="Demo Shopper",
+            is_active=True,
+        )
+    )
+    print(f"Demo user created: {DEMO_EMAIL} / {DEMO_PASSWORD}")
+
+
 def run() -> None:
     db = SessionLocal()
     try:
@@ -292,20 +325,13 @@ def run() -> None:
                     )
                 )
 
-            demo = User(
-                email="demo@ebiketucson.test",
-                hashed_password=hash_password("demo1234"),
-                full_name="Demo Shopper",
-                is_active=True,
-            )
-            db.add(demo)
-
             db.commit()
             n = len(products_data)
-            print(f"Seed completed: categories, {n} products, demo@ebiketucson.test / demo1234")
+            print(f"Seed completed: categories, {n} products")
         else:
             print("Database already seeded, skipping initial bike catalog.")
 
+        ensure_demo_user(db)
         n_cascos = ensure_cascos_category_and_products(db)
         db.commit()
         if n_cascos:

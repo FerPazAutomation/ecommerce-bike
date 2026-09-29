@@ -62,13 +62,36 @@ Abre `http://localhost:5173`.
 
 ## 4. Tests
 
+### Backend (pytest, SQLite en memoria — no requiere Docker)
+
 ```bash
 cd backend
-pytest
+pytest -m integration
 ```
 
-Los tests usan SQLite en memoria (no requieren Docker).
+### E2E / API real (Playwright + TypeScript)
+
+Con API (y front si corrés UI) levantados:
+
+```powershell
+cd e2e
+npm install
+npm run test:api
+```
+
+Datos de usuarios: [`e2e/data/users.ts`](e2e/data/users.ts). Usuario demo tras seed: `demo@example.com` / `demo1234`.
+
+## Enlaces útiles (local)
+
+| Qué | URL |
+|-----|-----|
+| Tienda | http://localhost:5173 |
+| Salud API | http://127.0.0.1:8000/health |
+| **Swagger** | http://127.0.0.1:8000/docs |
+| ReDoc | http://127.0.0.1:8000/redoc |
 
 ## Documentación para testers
 
-Ver [`docs/GUIA_TESTERS.md`](docs/GUIA_TESTERS.md).
+- [`docs/GUIA_TESTERS.md`](docs/GUIA_TESTERS.md) — flujos, endpoints, usuario demo, Swagger
+- [`docs/GUIA_INICIO_CADA_SESION.md`](docs/GUIA_INICIO_CADA_SESION.md) — arranque diario
+- [`docs/GUIA_TESTS_AUTOMATIZADOS.md`](docs/GUIA_TESTS_AUTOMATIZADOS.md) — automatización (pytest + Playwright TS)
