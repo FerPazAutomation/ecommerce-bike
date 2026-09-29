@@ -12,3 +12,5 @@ frontend/dist/
 backend/.env
 frontend/.env
 *.egg-info/
+test-results/
+norecursedirs = [".*", "_legacy"]
