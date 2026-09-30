@@ -32,6 +32,7 @@ dev = [
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+norecursedirs = [".*", "_legacy"]
 pythonpath = ["."]
 filterwarnings = ["ignore::DeprecationWarning"]
 # URL del frontend para pytest-playwright (fixture base_url / page.goto).
@@ -52,5 +53,3 @@ include = ["app*"]
 
 [tool.coverage.run]
 source = ["app"]
-
-norecursedirs = [".*", "_legacy"]

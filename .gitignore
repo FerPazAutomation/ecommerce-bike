@@ -13,4 +13,5 @@ backend/.env
 frontend/.env
 *.egg-info/
 test-results/
-norecursedirs = [".*", "_legacy"]
+cv-output/
+backend/tests/_legacy/E2E/artifacts/
