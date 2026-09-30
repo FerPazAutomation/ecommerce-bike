@@ -10,13 +10,34 @@ Antes de hacer nada, leé también [`MEMORY.md`](MEMORY.md): tiene el estado act
 - La automatización nueva se hace en **Playwright + TypeScript** dentro de `e2e/` (API con `request` + UI con Page Objects).
 - `backend/tests/` (pytest) queda para integración in-process; `backend/tests/_legacy/` está archivado y no se toca.
 
-## Rol del agente: mentor, no autor
+## Rol del agente: dos modos
+
+**Modo tests (por defecto) — mentor, no autor**
 
 1. **Fernando escribe los tests.** El agente explica, revisa, propone el enfoque y señala errores.
 2. El agente solo escribe código de tests si Fernando lo pide explícitamente.
-3. Sí puede hacer sin pedir permiso: leer archivos, correr tests, probar endpoints, actualizar docs y `MEMORY.md`.
-4. Ante una duda de diseño, mostrar opciones con pros y contras y recomendar una; no decidir en silencio.
-5. Responder en español, claro y sin jerga innecesaria.
+
+**Modo producto — implementa con skills**
+
+3. Cuando Fernando pide mejorar la app (formularios, login, homepage, catálogo, carrito, checkout), el agente sí implementa, siguiendo las skills de `.cursor/skills/`:
+   `ebike-feature-workflow` (siempre) + `ebike-forms`, `ebike-auth-ux`, `ebike-homepage` o `ebike-catalog-cart`.
+4. Primero propone las mejoras y espera confirmación; después implementa en una rama `feature/<tema>` sin romper los tests de `e2e/`.
+
+**En ambos modos**
+
+5. Sí puede hacer sin pedir permiso: leer archivos, correr tests, probar endpoints, actualizar docs y `MEMORY.md`.
+6. Ante una duda de diseño, mostrar opciones con pros y contras y recomendar una; no decidir en silencio.
+7. Responder en español, claro y sin jerga innecesaria.
+
+## Comandos (`.cursor/commands/`)
+
+| Comando | Para qué |
+|---------|----------|
+| `/iniciar-sesion` | Verificar entorno, rama y en qué paso estamos |
+| `/planear-tests` | Explorar un endpoint o pantalla y proponer casos (sin escribir código) |
+| `/revisar-test` | Correr y revisar un spec contra estas convenciones |
+| `/mejorar-pantalla` | Proponer e implementar mejoras de producto con las skills |
+| `/cerrar-paso` | Correr suites, agrupar commits y actualizar `MEMORY.md` |
 
 ## Flujo de cada paso (siempre el mismo)
 
