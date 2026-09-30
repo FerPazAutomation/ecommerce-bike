@@ -3,6 +3,7 @@ const SLUG_LABELS: Record<string, string> = {
   montana: "Montaña",
   ciudad: "Ciudad",
   electrica: "Eléctricas",
+  cascos: "Cascos",
 };
 
 export function categorySlugLabel(slug: string): string {

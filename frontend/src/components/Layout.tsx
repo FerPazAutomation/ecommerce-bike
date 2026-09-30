@@ -1,7 +1,8 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { apiFetch, clearToken, getToken } from "../api/client";
+import { apiFetch } from "../api/client";
+import { useAuth } from "../hooks/useAuth";
 import { CartIcon } from "./CartIcon";
 import { ProductSearchField } from "./ProductSearchField";
 import type { Category } from "../types";
@@ -29,13 +30,11 @@ export function Layout({ children }: { children: ReactNode }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [q, setQ] = useState("");
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const searchRef = useRef<HTMLInputElement>(null);
-  const token = getToken();
+  const { token, logout: endSession } = useAuth();
 
   function logout() {
-    clearToken();
-    queryClient.invalidateQueries();
+    endSession();
     setAccountOpen(false);
     setDrawerOpen(false);
     navigate("/");

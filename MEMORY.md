@@ -6,8 +6,9 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 ## Estado actual
 
 - **Rama activa:** `practice/test-rebuild` (pusheada a `origin`).
-- **Paso en curso:** API protegida con token (`e2e/tests/api/cart.spec.ts`).
-- **Último verde:** 7 tests Playwright (5 API + 2 UI) y 13 tests `pytest -m integration`.
+- **Paso en curso (tests):** API protegida con token (`e2e/tests/api/cart.spec.ts`, en progreso).
+- **Mejoras de producto sin commitear:** tanda 1 en `frontend/src/` (formularios, sesión, precios). Van a una rama `feature/ux-foundation`.
+- **Último verde:** 7 tests Playwright (5 API + 2 UI), 16 tests Vitest, 13 tests `pytest -m integration`, `npm run build` OK.
 
 ## Roadmap
 
@@ -24,6 +25,22 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 - [ ] Checkout (Stripe sandbox) — último, es el más frágil
 - [ ] CI con GitHub Actions (`npm run test:api` primero)
 
+### Producto (skills `ebike-*`)
+
+- [x] Formularios accesibles: `FormField`, validación alineada a la API, errores con `role="alert"` (login, registro, recuperar)
+- [x] Sesión: `AuthProvider` + `useAuth`, `RequireAuth`, `?next=`, 401 global con aviso, logout que limpia la caché
+- [x] Precios con `formatPrice` (`US$ 689,00`) y etiquetas de categoría unificadas
+- [x] Carrito (label y tope de cantidad, errores visibles) y checkout con resumen del pedido
+- [ ] Homepage: partir `HomePage.tsx` en secciones y estados de carga/error/vacío
+- [ ] Catálogo: filtros en la URL y estado "Sin stock" en tarjetas
+
+### Casos UI nuevos para automatizar (los escribe Fernando)
+
+- [ ] Login con email inválido o contraseña vacía → error por campo, sin llamar a la API
+- [ ] Ir a `/carrito` sin sesión → login → vuelve a `/carrito`
+- [ ] Token inválido en `localStorage` + `/carrito` → login con aviso "Tu sesión expiró"
+- [ ] Checkout con carrito vacío → botón "Pagar con Stripe" deshabilitado
+
 ## Decisiones tomadas
 
 | Decisión | Por qué |
@@ -35,6 +52,11 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 | Usuario demo `demo@example.com` / `demo1234` | El seed viejo usaba `.test` y la API lo rechaza. |
 | Emails únicos con `uniqueRegisterUser()` | Register falla con 400 si el email existe; evita choques entre corridas. |
 | CVs y ficha fuera del repo | Datos personales; no tienen que ver con el proyecto. |
+| Mejoras de producto en ramas `feature/<tema>` con skills `ebike-*` | Separar trabajo de producto del de tests y no romper los specs. |
+| Sesión centralizada en `AuthProvider` (`useAuth()`), nunca `getToken()` en páginas | Un solo lugar para login, logout y 401. |
+| Ante un 401, `AuthProvider` solo marca la sesión vencida; `RequireAuth` redirige | Dos navegaciones compitiendo perdían el `expired=1`. |
+| Token vencido en página pública: se cierra la sesión sin redirigir | No sacar al usuario de la home o el catálogo. |
+| Mensajes de error de la API sin traducir en el front | Los tests afirman el texto exacto (`"Incorrect email or password"`). |
 
 ## Datos útiles de la API
 
@@ -60,3 +82,5 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 - **2026-09-25** — PASO 1: health + auth API, `users.ts`, docs con Swagger y usuario demo, fix del seed.
 - **2026-09-28** — Login UI con POM; commit y push de `e2e/`.
 - **2026-09-29** — Limpieza del repo (legacy archivado, CVs fuera). Arranca API con token. Se crean `AGENTS.md` y `MEMORY.md`.
+- **2026-09-30** — Se agregan skills de producto (`.cursor/skills/ebike-*`) y comandos de flujo (`.cursor/commands/`). `AGENTS.md` pasa a tener modo tests y modo producto.
+- **2026-09-30** — Primera tanda de producto con las skills: formularios, sesión, precios, carrito y checkout. Se corrige una carrera de redirecciones en la sesión vencida.

@@ -1,7 +1,10 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
-import { apiFetch, getToken } from "../api/client";
+import { Link } from "react-router-dom";
+import { apiFetch } from "../api/client";
+import { useAuth } from "../hooks/useAuth";
+import { formatPrice } from "../lib/formatPrice";
+import { PASSWORD_MIN_EXCLUSIVE } from "../lib/validation";
 import type { OrderDetail, OrderSummary, UserProfile } from "../types";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -12,13 +15,6 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 type AccountSection = "personal" | "password" | "purchases" | "help";
-
-function formatMoney(amount: string, currency: string) {
-  const n = Number(amount);
-  if (Number.isNaN(n)) return amount;
-  const sym = currency.toLowerCase() === "usd" ? "US$" : currency.toUpperCase();
-  return `${sym} ${n.toFixed(2)}`;
-}
 
 type TimelineStep = {
   key: string;
@@ -132,7 +128,7 @@ function AccountCollapsible({
 }
 
 export function AccountPage() {
-  const token = getToken();
+  const { token } = useAuth();
   const [detailId, setDetailId] = useState<number | null>(null);
   const [openSection, setOpenSection] = useState<Record<AccountSection, boolean>>({
     personal: false,
@@ -180,22 +176,25 @@ export function AccountPage() {
     },
   });
 
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-
   if (profileError) {
     return (
       <div className="container account-page">
-        <p style={{ color: "var(--danger)" }}>No se pudo cargar tu cuenta. Vuelve a iniciar sesión.</p>
-        <Link to="/login">Iniciar sesión</Link>
+        <p className="form-alert" role="alert">
+          No se pudo cargar tu cuenta. Vuelve a iniciar sesión.
+        </p>
+        <p>
+          <Link to="/login">Iniciar sesión</Link>
+        </p>
       </div>
     );
   }
 
   const pwdMismatch = pwdNew.length > 0 && pwdNew !== pwdConfirm;
   const canSubmitPwd =
-    pwdCurrent.length > 0 && pwdNew.length > 8 && pwdNew === pwdConfirm && !changePassword.isPending;
+    pwdCurrent.length > 0 &&
+    pwdNew.length > PASSWORD_MIN_EXCLUSIVE &&
+    pwdNew === pwdConfirm &&
+    !changePassword.isPending;
 
   return (
     <div className="container account-page">
@@ -328,7 +327,7 @@ export function AccountPage() {
                           })}
                         </td>
                         <td>{STATUS_LABEL[o.status] ?? o.status}</td>
-                        <td>{formatMoney(o.total_amount, o.currency)}</td>
+                        <td>{formatPrice(o.total_amount, o.currency)}</td>
                         <td>
                           <button
                             type="button"
@@ -370,17 +369,14 @@ export function AccountPage() {
                       <li key={`${line.product_id}-${i}`}>
                         <span>{line.name}</span>
                         <span>
-                          ×{line.quantity} · {formatMoney(line.unit_price, orderDetail.currency)} ·{" "}
-                          {formatMoney(
-                            (Number(line.unit_price) * line.quantity).toFixed(2),
-                            orderDetail.currency,
-                          )}
+                          ×{line.quantity} · {formatPrice(line.unit_price, orderDetail.currency)} ·{" "}
+                          {formatPrice(Number(line.unit_price) * line.quantity, orderDetail.currency)}
                         </span>
                       </li>
                     ))}
                   </ul>
                   <p style={{ margin: "0.75rem 0 0", fontWeight: 700 }}>
-                    Total: {formatMoney(orderDetail.total_amount, orderDetail.currency)}
+                    Total: {formatPrice(orderDetail.total_amount, orderDetail.currency)}
                   </p>
                 </div>
               )}

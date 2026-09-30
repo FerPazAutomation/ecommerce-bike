@@ -1362,6 +1362,47 @@ button.landing-cta-btn:hover {
   border-color: var(--danger);
 }
 
+/* ——— Campos y avisos reutilizables (FormField, errores de envío) ——— */
+.form-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.form-field .form-label {
+  margin-top: 0;
+}
+
+.form-field .form-field-error {
+  margin: 0;
+}
+
+.form-field-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.form-alert {
+  margin: 0.75rem 0 0;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius);
+  background: rgba(231, 76, 60, 0.08);
+  color: var(--danger);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.form-notice {
+  margin: 1rem 0 0;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: rgba(46, 204, 113, 0.1);
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
 .service-date-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

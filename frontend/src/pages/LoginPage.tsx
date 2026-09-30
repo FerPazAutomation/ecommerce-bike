@@ -1,9 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { apiFetch, setToken } from "../api/client";
+import { apiFetch } from "../api/client";
+import { FormField } from "../components/FormField";
+import { useAuth } from "../hooks/useAuth";
+import { safeNextPath } from "../lib/redirect";
+import { validateEmail, validateNewPassword, validateRequiredPassword } from "../lib/validation";
 
 type TokenResponse = { access_token: string; token_type: string };
+type Mode = "login" | "register";
+type FieldErrors = { email?: string; password?: string };
 
 const REMEMBER_EMAIL_KEY = "ebike_remember_email";
 
@@ -19,13 +25,20 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const qc = useQueryClient();
+  const { login } = useAuth();
   const [email, setEmail] = useState(readStoredEmail);
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [mode, setMode] = useState<"login" | "register">(() =>
+  const [mode, setMode] = useState<Mode>(() =>
     searchParams.get("registro") === "1" ? "register" : "login",
   );
   const [rememberMe, setRememberMe] = useState(() => !!readStoredEmail());
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+
+  const nextPath = safeNextPath(searchParams.get("next"));
+  const sessionExpired = searchParams.get("expired") === "1";
 
   useEffect(() => {
     if (searchParams.get("registro") === "1") setMode("register");
@@ -48,7 +61,7 @@ export function LoginPage() {
       return { token: t, mode };
     },
     onSuccess: ({ token: t, mode: m }) => {
-      setToken(t.access_token);
+      login(t.access_token);
       if (m === "login") {
         try {
           if (rememberMe) {
@@ -61,48 +74,88 @@ export function LoginPage() {
         }
       }
       qc.invalidateQueries();
-      navigate("/productos");
+      navigate(nextPath, { replace: true });
     },
   });
 
+  function switchMode(next: Mode) {
+    setMode(next);
+    setFieldErrors({});
+    auth.reset();
+  }
+
   function onSubmit(e: FormEvent) {
     e.preventDefault();
+    const errors: FieldErrors = {
+      email: validateEmail(email),
+      password: mode === "register" ? validateNewPassword(password) : validateRequiredPassword(password),
+    };
+    setFieldErrors(errors);
+    if (errors.email) {
+      emailRef.current?.focus();
+      return;
+    }
+    if (errors.password) {
+      passwordRef.current?.focus();
+      return;
+    }
     auth.mutate();
   }
+
+  const submitLabel = auth.isPending
+    ? mode === "login"
+      ? "Entrando…"
+      : "Creando cuenta…"
+    : mode === "login"
+      ? "Entrar"
+      : "Registrarse";
 
   return (
     <div className="container login-page-wrap">
       <h1>{mode === "login" ? "Iniciar sesión" : "Crear cuenta"}</h1>
 
+      {sessionExpired && mode === "login" ? (
+        <p className="form-notice" role="status">
+          Tu sesión expiró. Iniciá sesión de nuevo para continuar.
+        </p>
+      ) : null}
+
       <div className="login-page-card">
-        <form onSubmit={onSubmit}>
+        <form onSubmit={onSubmit} noValidate>
           {mode === "register" && (
-            <input
-              className="input"
-              placeholder="Nombre"
+            <FormField
+              label="Nombre"
+              autoComplete="name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
             />
           )}
-          <input
-            className="input"
+          <FormField
+            ref={emailRef}
+            label="Email"
             type="email"
             required
             autoComplete="email"
-            placeholder="Email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            error={fieldErrors.email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (fieldErrors.email) setFieldErrors((x) => ({ ...x, email: undefined }));
+            }}
           />
-          <input
-            className="input"
+          <FormField
+            ref={passwordRef}
+            label="Contraseña"
             type="password"
             required
-            minLength={mode === "register" ? 9 : 1}
-            placeholder={
-              mode === "register" ? "Contraseña (más de 8 caracteres)" : "Contraseña"
-            }
+            autoComplete={mode === "register" ? "new-password" : "current-password"}
+            hint={mode === "register" ? "Más de 8 caracteres." : undefined}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            error={fieldErrors.password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (fieldErrors.password) setFieldErrors((x) => ({ ...x, password: undefined }));
+            }}
           />
 
           {mode === "login" && (
@@ -122,12 +175,12 @@ export function LoginPage() {
           )}
 
           <button type="submit" className="btn" disabled={auth.isPending}>
-            {auth.isPending ? "…" : mode === "login" ? "Entrar" : "Registrarse"}
+            {submitLabel}
           </button>
         </form>
 
         {auth.isError && (
-          <p style={{ color: "var(--danger)", marginTop: "0.75rem", marginBottom: 0 }}>
+          <p className="form-alert" role="alert">
             {(auth.error as Error).message}
           </p>
         )}
@@ -137,14 +190,14 @@ export function LoginPage() {
         {mode === "login" ? (
           <>
             ¿Sin cuenta?{" "}
-            <button type="button" className="login-text-link" onClick={() => setMode("register")}>
+            <button type="button" className="login-text-link" onClick={() => switchMode("register")}>
               Regístrate
             </button>
           </>
         ) : (
           <>
             ¿Ya tienes cuenta?{" "}
-            <button type="button" className="login-text-link" onClick={() => setMode("login")}>
+            <button type="button" className="login-text-link" onClick={() => switchMode("login")}>
               Inicia sesión
             </button>
           </>

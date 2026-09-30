@@ -12,6 +12,7 @@ describe("categorySlugLabel", () => {
   it("devuelve la etiqueta en español para slugs conocidos", () => {
     expect(categorySlugLabel("montana")).toBe("Montaña");
     expect(categorySlugLabel("ciudad")).toBe("Ciudad");
+    expect(categorySlugLabel("cascos")).toBe("Cascos");
   });
 
   it("devuelve el slug si no hay etiqueta", () => {
