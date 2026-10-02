@@ -31,6 +31,7 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 - [x] Sesión: `AuthProvider` + `useAuth`, `RequireAuth`, `?next=`, 401 global con aviso, logout que limpia la caché
 - [x] Precios con `formatPrice` (`US$ 689,00`) y etiquetas de categoría unificadas
 - [x] Carrito (label y tope de cantidad, errores visibles) y checkout con resumen del pedido
+- [x] Validación de formularios: política de contraseña en API y front (espejo), `useForm`, `PasswordField` con requisitos y Mostrar/Ocultar, "Repetir contraseña" en registro y cuenta, reglas de servicio técnico
 - [ ] Homepage: partir `HomePage.tsx` en secciones y estados de carga/error/vacío
 - [ ] Catálogo: filtros en la URL y estado "Sin stock" en tarjetas
 
@@ -40,6 +41,10 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 - [ ] Ir a `/carrito` sin sesión → login → vuelve a `/carrito`
 - [ ] Token inválido en `localStorage` + `/carrito` → login con aviso "Tu sesión expiró"
 - [ ] Checkout con carrito vacío → botón "Pagar con Stripe" deshabilitado
+- [ ] Registro con contraseña débil (`abcdefghi`, `123456789`, `abcd1234`) → advertencia por campo, sin llamar a la API
+- [ ] Registro con "Repetir contraseña" distinta → "Las contraseñas no coinciden"
+- [ ] API: `POST /auth/register` con contraseña sin número → 422 con el mensaje de la política
+- [ ] API: `POST /auth/change-password` con la misma contraseña → 422 "distinta de la actual"
 
 ## Decisiones tomadas
 
@@ -57,6 +62,9 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 | Ante un 401, `AuthProvider` solo marca la sesión vencida; `RequireAuth` redirige | Dos navegaciones compitiendo perdían el `expired=1`. |
 | Token vencido en página pública: se cierra la sesión sin redirigir | No sacar al usuario de la home o el catálogo. |
 | Mensajes de error de la API sin traducir en el front | Los tests afirman el texto exacto (`"Incorrect email or password"`). |
+| Política de contraseña: > 8 caracteres, ≤ 72 bytes, letra, número, sin espacios en los bordes | Formulario "serio" sin volverse hostil; mismas reglas y mensajes en `schemas/auth.py` y `lib/validation.ts`. |
+| El login no aplica la política | Usuarios existentes (ej. `demo1234`) tienen que poder entrar. |
+| Validación propia (`useForm`) sin react-hook-form ni zod | Forms chicos; no suma dependencias. |
 
 ## Datos útiles de la API
 
@@ -66,6 +74,8 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
   - token inválido → 401 `"Invalid token"`
   - usuario inexistente/inactivo → 401 `"User not found"`
 - `GET /cart` → `{ items: [], subtotal: "0" }` — `subtotal` es **string** (Decimal).
+- `POST /auth/register` y `change-password` validan la política de contraseña → 422 con `detail[].msg` en español
+  (Pydantic antepone `"Value error, "`). Contraseña actual incorrecta en `change-password` → 400.
 - Swagger: http://127.0.0.1:8000/docs
 
 ## Errores conocidos (y su solución)
@@ -84,3 +94,4 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 - **2026-09-29** — Limpieza del repo (legacy archivado, CVs fuera). Arranca API con token. Se crean `AGENTS.md` y `MEMORY.md`.
 - **2026-09-30** — Se agregan skills de producto (`.cursor/skills/ebike-*`) y comandos de flujo (`.cursor/commands/`). `AGENTS.md` pasa a tener modo tests y modo producto.
 - **2026-09-30** — Primera tanda de producto con las skills: formularios, sesión, precios, carrito y checkout. Se corrige una carrera de redirecciones en la sesión vencida.
+- **2026-09-30** — Validación de formularios (skill `ebike-forms` actualizada): política de contraseña en la API y el front, `useForm`, `PasswordField`, confirmación de contraseña y reglas de servicio técnico.
