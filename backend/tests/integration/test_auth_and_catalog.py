@@ -71,6 +71,23 @@ def test_change_password_rejects_wrong_current(client):
 
 
 @pytest.mark.integration
+def test_change_password_rejects_same_as_current(client):
+    client.post(
+        "/auth/register",
+        json={"email": "same@test.com", "password": "secret129", "full_name": "S"},
+    )
+    r = client.post("/auth/login", json={"email": "same@test.com", "password": "secret129"})
+    headers = {"Authorization": f"Bearer {r.json()['access_token']}"}
+    r2 = client.post(
+        "/auth/change-password",
+        json={"current_password": "secret129", "new_password": "secret129"},
+        headers=headers,
+    )
+    assert r2.status_code == 422
+    assert "distinta de la actual" in r2.text
+
+
+@pytest.mark.integration
 def test_login_fails_wrong_password(client):
     client.post(
         "/auth/register",

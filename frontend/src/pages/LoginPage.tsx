@@ -1,17 +1,39 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { apiFetch } from "../api/client";
 import { FormField } from "../components/FormField";
+import { PasswordField } from "../components/PasswordField";
 import { useAuth } from "../hooks/useAuth";
+import { useForm } from "../hooks/useForm";
+import type { Rules } from "../lib/formValidation";
 import { safeNextPath } from "../lib/redirect";
-import { validateEmail, validateNewPassword, validateRequiredPassword } from "../lib/validation";
+import {
+  validateEmail,
+  validateNewPassword,
+  validateOptionalFullName,
+  validatePasswordConfirmation,
+  validateRequiredPassword,
+} from "../lib/validation";
 
 type TokenResponse = { access_token: string; token_type: string };
 type Mode = "login" | "register";
-type FieldErrors = { email?: string; password?: string };
+type AuthValues = { fullName: string; email: string; password: string; confirm: string };
 
 const REMEMBER_EMAIL_KEY = "ebike_remember_email";
+
+/** Login no aplica la política de contraseña: solo pide que el campo no esté vacío. */
+const LOGIN_RULES: Rules<AuthValues> = {
+  email: [validateEmail],
+  password: [validateRequiredPassword],
+};
+
+const REGISTER_RULES: Rules<AuthValues> = {
+  fullName: [validateOptionalFullName],
+  email: [validateEmail],
+  password: [validateNewPassword],
+  confirm: [(value, values) => validatePasswordConfirmation(values.password, value)],
+};
 
 function readStoredEmail(): string {
   try {
@@ -26,16 +48,15 @@ export function LoginPage() {
   const [searchParams] = useSearchParams();
   const qc = useQueryClient();
   const { login } = useAuth();
-  const [email, setEmail] = useState(readStoredEmail);
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
   const [mode, setMode] = useState<Mode>(() =>
     searchParams.get("registro") === "1" ? "register" : "login",
   );
-  const [rememberMe, setRememberMe] = useState(() => !!readStoredEmail());
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const emailRef = useRef<HTMLInputElement>(null);
-  const passwordRef = useRef<HTMLInputElement>(null);
+  const [storedEmail] = useState(readStoredEmail);
+  const [rememberMe, setRememberMe] = useState(() => !!storedEmail);
+  const form = useForm<AuthValues>(
+    { fullName: "", email: storedEmail, password: "", confirm: "" },
+    mode === "register" ? REGISTER_RULES : LOGIN_RULES,
+  );
 
   const nextPath = safeNextPath(searchParams.get("next"));
   const sessionExpired = searchParams.get("expired") === "1";
@@ -45,22 +66,23 @@ export function LoginPage() {
   }, [searchParams]);
 
   const auth = useMutation({
-    mutationFn: async () => {
-      if (mode === "register") {
+    mutationFn: async ({ values, mode: m }: { values: AuthValues; mode: Mode }) => {
+      const email = values.email.trim();
+      if (m === "register") {
         await apiFetch("/auth/register", {
           method: "POST",
           auth: false,
-          body: JSON.stringify({ email, password, full_name: fullName }),
+          body: JSON.stringify({ email, password: values.password, full_name: values.fullName.trim() }),
         });
       }
       const t = await apiFetch<TokenResponse>("/auth/login", {
         method: "POST",
         auth: false,
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password: values.password }),
       });
-      return { token: t, mode };
+      return { token: t, mode: m, email };
     },
-    onSuccess: ({ token: t, mode: m }) => {
+    onSuccess: ({ token: t, mode: m, email }) => {
       login(t.access_token);
       if (m === "login") {
         try {
@@ -80,26 +102,8 @@ export function LoginPage() {
 
   function switchMode(next: Mode) {
     setMode(next);
-    setFieldErrors({});
+    form.reset({ ...form.values, confirm: "" });
     auth.reset();
-  }
-
-  function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    const errors: FieldErrors = {
-      email: validateEmail(email),
-      password: mode === "register" ? validateNewPassword(password) : validateRequiredPassword(password),
-    };
-    setFieldErrors(errors);
-    if (errors.email) {
-      emailRef.current?.focus();
-      return;
-    }
-    if (errors.password) {
-      passwordRef.current?.focus();
-      return;
-    }
-    auth.mutate();
   }
 
   const submitLabel = auth.isPending
@@ -121,42 +125,26 @@ export function LoginPage() {
       ) : null}
 
       <div className="login-page-card">
-        <form onSubmit={onSubmit} noValidate>
+        <form {...form.formProps((values) => auth.mutate({ values, mode }))}>
           {mode === "register" && (
-            <FormField
-              label="Nombre"
-              autoComplete="name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-            />
+            <FormField label="Nombre" autoComplete="name" hint="Opcional." {...form.field("fullName")} />
           )}
-          <FormField
-            ref={emailRef}
-            label="Email"
-            type="email"
-            required
-            autoComplete="email"
-            value={email}
-            error={fieldErrors.email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              if (fieldErrors.email) setFieldErrors((x) => ({ ...x, email: undefined }));
-            }}
-          />
-          <FormField
-            ref={passwordRef}
+          <FormField label="Email" type="email" required autoComplete="email" {...form.field("email")} />
+          <PasswordField
             label="Contraseña"
-            type="password"
             required
             autoComplete={mode === "register" ? "new-password" : "current-password"}
-            hint={mode === "register" ? "Más de 8 caracteres." : undefined}
-            value={password}
-            error={fieldErrors.password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              if (fieldErrors.password) setFieldErrors((x) => ({ ...x, password: undefined }));
-            }}
+            showRequirements={mode === "register"}
+            {...form.field("password")}
           />
+          {mode === "register" && (
+            <PasswordField
+              label="Repetir contraseña"
+              required
+              autoComplete="new-password"
+              {...form.field("confirm")}
+            />
+          )}
 
           {mode === "login" && (
             <div className="login-form-extras">

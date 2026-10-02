@@ -72,7 +72,7 @@ export async function apiFetch<T>(
       message = detail;
     } else if (Array.isArray(detail)) {
       message = detail
-        .map((d: { msg?: string }) => d.msg)
+        .map((d: { msg?: string }) => d.msg?.replace(/^Value error, /, ""))
         .filter(Boolean)
         .join(" ");
     } else {

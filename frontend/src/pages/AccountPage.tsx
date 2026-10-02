@@ -2,10 +2,29 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch } from "../api/client";
+import { PasswordField } from "../components/PasswordField";
 import { useAuth } from "../hooks/useAuth";
+import { useForm } from "../hooks/useForm";
+import type { Rules } from "../lib/formValidation";
 import { formatPrice } from "../lib/formatPrice";
-import { PASSWORD_MIN_EXCLUSIVE } from "../lib/validation";
+import {
+  CURRENT_PASSWORD_REQUIRED_MESSAGE,
+  validateDifferentPassword,
+  validateNewPassword,
+  validatePasswordConfirmation,
+  validateRequired,
+} from "../lib/validation";
 import type { OrderDetail, OrderSummary, UserProfile } from "../types";
+
+type PasswordValues = { current: string; next: string; confirm: string };
+
+const EMPTY_PASSWORDS: PasswordValues = { current: "", next: "", confirm: "" };
+
+const PASSWORD_RULES: Rules<PasswordValues> = {
+  current: [(value) => validateRequired(value, CURRENT_PASSWORD_REQUIRED_MESSAGE)],
+  next: [validateNewPassword, (value, values) => validateDifferentPassword(values.current, value)],
+  confirm: [(value, values) => validatePasswordConfirmation(values.next, value)],
+};
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "Pendiente de pago",
@@ -137,9 +156,7 @@ export function AccountPage() {
     help: false,
   });
 
-  const [pwdCurrent, setPwdCurrent] = useState("");
-  const [pwdNew, setPwdNew] = useState("");
-  const [pwdConfirm, setPwdConfirm] = useState("");
+  const pwdForm = useForm(EMPTY_PASSWORDS, PASSWORD_RULES);
 
   const toggle = (s: AccountSection) => {
     setOpenSection((o) => ({ ...o, [s]: !o[s] }));
@@ -169,11 +186,7 @@ export function AccountPage() {
         method: "POST",
         body: JSON.stringify(body),
       }),
-    onSuccess: () => {
-      setPwdCurrent("");
-      setPwdNew("");
-      setPwdConfirm("");
-    },
+    onSuccess: () => pwdForm.reset(),
   });
 
   if (profileError) {
@@ -188,13 +201,6 @@ export function AccountPage() {
       </div>
     );
   }
-
-  const pwdMismatch = pwdNew.length > 0 && pwdNew !== pwdConfirm;
-  const canSubmitPwd =
-    pwdCurrent.length > 0 &&
-    pwdNew.length > PASSWORD_MIN_EXCLUSIVE &&
-    pwdNew === pwdConfirm &&
-    !changePassword.isPending;
 
   return (
     <div className="container account-page">
@@ -233,45 +239,29 @@ export function AccountPage() {
         >
           <form
             className="account-password-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!canSubmitPwd || pwdMismatch) return;
-              changePassword.mutate({ current_password: pwdCurrent, new_password: pwdNew });
-            }}
+            {...pwdForm.formProps((values) =>
+              changePassword.mutate({ current_password: values.current, new_password: values.next }),
+            )}
           >
-            <label className="account-field">
-              <span>Contraseña actual</span>
-              <input
-                type="password"
-                autoComplete="current-password"
-                value={pwdCurrent}
-                onChange={(e) => setPwdCurrent(e.target.value)}
-              />
-            </label>
-            <label className="account-field">
-              <span>Nueva contraseña</span>
-              <input
-                type="password"
-                autoComplete="new-password"
-                value={pwdNew}
-                onChange={(e) => setPwdNew(e.target.value)}
-              />
-            </label>
-            <p className="account-field-hint">Más de 8 caracteres.</p>
-            <label className="account-field">
-              <span>Repetir nueva contraseña</span>
-              <input
-                type="password"
-                autoComplete="new-password"
-                value={pwdConfirm}
-                onChange={(e) => setPwdConfirm(e.target.value)}
-              />
-            </label>
-            {pwdMismatch ? (
-              <p className="account-form-error" role="alert">
-                Las contraseñas nuevas no coinciden.
-              </p>
-            ) : null}
+            <PasswordField
+              label="Contraseña actual"
+              required
+              autoComplete="current-password"
+              {...pwdForm.field("current")}
+            />
+            <PasswordField
+              label="Nueva contraseña"
+              required
+              autoComplete="new-password"
+              showRequirements
+              {...pwdForm.field("next")}
+            />
+            <PasswordField
+              label="Repetir nueva contraseña"
+              required
+              autoComplete="new-password"
+              {...pwdForm.field("confirm")}
+            />
             {changePassword.isError ? (
               <p className="account-form-error" role="alert">
                 {(changePassword.error as Error).message}
@@ -282,7 +272,7 @@ export function AccountPage() {
                 Contraseña actualizada. Podés seguir usando la sesión actual.
               </p>
             ) : null}
-            <button type="submit" className="btn" disabled={!canSubmitPwd || pwdMismatch}>
+            <button type="submit" className="btn" disabled={changePassword.isPending}>
               {changePassword.isPending ? "Guardando…" : "Guardar nueva contraseña"}
             </button>
           </form>
