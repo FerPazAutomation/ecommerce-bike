@@ -24,8 +24,11 @@ export const users = {
   },
 } as const;
 
-/** Prefijo para emails únicos en register (evita colisión entre runs). */
-export function uniqueRegisterUser(suffix = Date.now()) {
+/**
+ * Datos para un usuario nuevo con email único (solo arma el objeto, no llama a la API).
+ * El sufijo combina milisegundos + número aleatorio para que dos tests en paralelo no choquen.
+ */
+export function uniqueRegisterUser(suffix = `${Date.now()}-${Math.floor(Math.random() * 10_000)}`) {
   return {
     email: `qa.auto+${suffix}@example.com`,
     password: "TestPass1234",
