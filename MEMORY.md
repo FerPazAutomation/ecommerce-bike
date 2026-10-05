@@ -16,7 +16,7 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 - [x] Health API
 - [x] Auth API: login OK, contraseña incorrecta, email inexistente, register + login
 - [x] Login UI con Page Object (válido / inválido)
-- [x] Archivar E2E viejo en Python (`backend/tests/_legacy/`)
+- [x] Retirar el E2E viejo en Python (primero archivado, después borrado; queda en el historial de git)
 - [ ] API protegida con token (`/cart`: sin token, token inválido, sin `Bearer`, token válido)
 - [ ] Helper `getToken` en `e2e/helpers/auth.ts`
 - [ ] **PR `practice/test-rebuild` → `main`**

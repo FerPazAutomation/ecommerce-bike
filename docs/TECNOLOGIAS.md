@@ -74,12 +74,6 @@ Lenguaje en el que está escrita la API. La versión mínima está fijada en `py
 
 **En este proyecto:** centraliza ajustes como URL de base de datos, claves de Stripe, secretos JWT, etc.
 
-### python-multipart
-
-**Qué es:** soporte para parsear formularios `multipart/form-data` en aplicaciones ASGI.
-
-**En este proyecto:** necesario cuando la API recibe datos tipo formulario o subida de archivos (según las rutas que lo usen).
-
 ### Stripe (SDK Python)
 
 **Qué es:** plataforma de pagos; el paquete `stripe` es el cliente oficial para crear sesiones de pago, consultar eventos, etc.
@@ -90,7 +84,7 @@ Lenguaje en el que está escrita la API. La versión mínima está fijada en `py
 
 **Qué es:** validación de direcciones de correo según reglas estándar.
 
-**En este proyecto:** suele usarse junto con Pydantic para validar emails en modelos de entrada.
+**En este proyecto:** valida el email del registro (`validate_email` en `app/schemas/auth.py`). Rechaza dominios reservados como `.test`.
 
 ---
 
@@ -100,15 +94,10 @@ Lenguaje en el que está escrita la API. La versión mínima está fijada en `py
 
 Cliente HTTP moderno para Python, usado en tests para llamar a la API sin navegador.
 
-### pytest, pytest-asyncio, pytest-cov
+### pytest, pytest-cov
 
-- **pytest:** framework de tests.
-- **pytest-asyncio:** ejecuta tests asíncronos (compatibles con FastAPI).
+- **pytest:** framework de tests. Marcadores `unit` e `integration`; la API corre in-process con `TestClient` y SQLite en memoria.
 - **pytest-cov:** informes de cobertura de código.
-
-### Factory Boy
-
-Genera datos de prueba (factories) para poblar modelos en tests de forma reproducible.
 
 ### setuptools (build)
 
@@ -160,6 +149,27 @@ Plugin de Vite que habilita Fast Refresh y compilación de JSX/TSX para React.
 
 Estilos en cascada propios del proyecto (sin framework CSS obligatorio listado en `package.json`).
 
+### Vitest
+
+**Qué es:** runner de tests unitarios integrado con Vite.
+
+**En este proyecto:** prueba la lógica pura del front (`frontend/src/lib/*.test.ts`): validaciones de formularios, redirecciones seguras, formato de precios.
+
+---
+
+## Automatización E2E y API (`e2e/`)
+
+### Playwright + TypeScript
+
+**Qué es:** framework de automatización de navegadores (Chromium, Firefox, WebKit) con cliente HTTP incluido.
+
+**En este proyecto:** dos projects en `e2e/playwright.config.ts`:
+
+- `api`: tests de la API real con `request` (`http://127.0.0.1:8000`).
+- `ui`: tests de la tienda con Page Objects (`http://localhost:5173`).
+
+Datos de prueba en `e2e/data/`, helpers en `e2e/helpers/` y Page Objects en `e2e/pages/`.
+
 ---
 
 ## Resumen rápido
@@ -174,5 +184,8 @@ Estilos en cascada propios del proyecto (sin framework CSS obligatorio listado e
 | Stripe     | Pagos online y webhooks                           |
 | React + TypeScript + Vite | Interfaz web moderna                  |
 | React Query + React Router | Datos de API y navegación          |
+| pytest     | Tests unitarios y de integración del backend      |
+| Vitest     | Tests unitarios del frontend                      |
+| Playwright + TypeScript | Tests E2E de UI y de API contra el stack real |
 
 Si añades más servicios (por ejemplo Redis, cola de trabajos o contenedores para la API), conviene actualizar este archivo junto con `docker-compose.yml` y las dependencias.

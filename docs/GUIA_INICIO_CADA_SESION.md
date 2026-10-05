@@ -122,7 +122,25 @@ Otro proceso ya usa **8000**, **5173** o **5433** (PostgreSQL de Docker en este 
 
 ### La web carga pero no hay productos / errores de red
 
-Suele ser la API caída o CORS/URL: confirma **http://127.0.0.1:8000/health** y que `frontend\.env` tenga `VITE_API_URL=http://localhost:8000` (o el origen que uses).
+Suele ser la API caída o una URL mal configurada:
+
+1. Confirmá que **http://127.0.0.1:8000/health** responde `{"status":"ok"}`.
+2. En `frontend\.env`, `VITE_API_URL` tiene que estar **comentada**: así el front usa el proxy `/api` de Vite. Si apunta a `localhost:8000`, el navegador puede resolver `localhost` a IPv6 y no encontrar la API.
+
+### La API devuelve errores de autenticación con PostgreSQL
+
+En muchos Windows ya hay un PostgreSQL instalado escuchando en **5432**. Por eso `docker-compose.yml` publica la base del proyecto en **5433** y `DATABASE_URL` apunta a `localhost:5433`. Si cambiás el puerto a 5432, la API puede terminar hablando con la otra instancia (otro usuario y contraseña).
+
+### Trabajar sin Docker
+
+Instalá [PostgreSQL para Windows](https://www.postgresql.org/download/windows/) y, desde pgAdmin o `psql`:
+
+```sql
+CREATE USER ebike WITH PASSWORD 'ebike_dev';
+CREATE DATABASE ebike_tucson OWNER ebike;
+```
+
+En `backend\.env` usá el puerto de tu instalación (normalmente `localhost:5432`) y seguí con migraciones, seed y `uvicorn` como en la opción B.
 
 ### `python` o `npm` no se reconoce
 

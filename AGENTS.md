@@ -8,7 +8,8 @@ Antes de hacer nada, leé también [`MEMORY.md`](MEMORY.md): tiene el estado act
 - App: tienda de e-bikes. **React + Vite** (`frontend/`), **FastAPI + PostgreSQL** (`backend/`), Stripe sandbox.
 - Objetivo del repo: **práctica y portfolio de QA Automation** de Fernando (QA manual → automation).
 - La automatización nueva se hace en **Playwright + TypeScript** dentro de `e2e/` (API con `request` + UI con Page Objects).
-- `backend/tests/` (pytest) queda para integración in-process; `backend/tests/_legacy/` está archivado y no se toca.
+- `backend/tests/` (pytest) queda para tests unitarios y de integración in-process (SQLite en memoria).
+- `frontend/src/**/*.test.ts` (Vitest) cubre la lógica pura del front (validaciones, redirecciones, formato).
 
 ## Rol del agente: dos modos
 
