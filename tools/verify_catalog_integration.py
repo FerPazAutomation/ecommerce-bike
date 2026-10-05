@@ -2,9 +2,7 @@
 Comprueba que cada PNG (índices 01–07 por carpeta, 21 en total) esté alineado con
 catalogManifest.json. Los archivos …-08.png u otros no se usan en seed/manifiesto.
 
-Uso:
-  (raíz del repo)  python tools/verify_catalog_integration.py
-  (carpeta backend)  python tools/verify_catalog_integration.py   # vía backend/tools/verify_catalog_integration.py
+Uso (desde la raíz del repo):  python tools/verify_catalog_integration.py
 """
 
 from __future__ import annotations

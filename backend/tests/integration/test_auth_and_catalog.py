@@ -1,8 +1,7 @@
 """
 Tests de integración: registro, login, recuperación de contraseña, catálogo y búsqueda.
 
-Cómo leer este archivo (marcadores, fixtures, imports): ver
-`docs/GUIA_TESTS_AUTOMATIZADOS.md`, sección **10.4**.
+Las fixtures `client` y `db_session` vienen de `tests/conftest.py` (SQLite en memoria, una BD por test).
 """
 
 import pytest
