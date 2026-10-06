@@ -13,7 +13,6 @@ dependencies = [
   "bcrypt>=4.2.0",
   "python-jose[cryptography]>=3.3.0",
   "pydantic-settings>=2.6.0",
-  "python-multipart>=0.0.17",
   "stripe>=11.0.0",
   "email-validator>=2.2.0",
 ]
@@ -22,24 +21,16 @@ dependencies = [
 dev = [
   "httpx>=0.27.0",
   "pytest>=8.3.0",
-  "pytest-asyncio>=0.24.0",
   "pytest-cov>=6.0.0",
-  "factory-boy>=3.3.0",
-  "pytest-playwright>=0.4.0",
-  "playwright>=1.49.0"
 ]
 
 [tool.pytest.ini_options]
-asyncio_mode = "auto"
 testpaths = ["tests"]
 pythonpath = ["."]
 filterwarnings = ["ignore::DeprecationWarning"]
-# URL del frontend para pytest-playwright (fixture base_url / page.goto).
-base_url = "http://localhost:5173"
 markers = [
   "unit: tests de servicios / lógica sin HTTP (pueden usar SQLite en memoria vía fixtures)",
   "integration: tests de integración API (TestClient + SQLite en memoria)",
-  "e2e: tests E2E con navegador (Playwright); requieren frontend en base_url",
 ]
 
 [build-system]

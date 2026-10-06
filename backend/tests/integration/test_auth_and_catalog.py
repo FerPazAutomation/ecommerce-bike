@@ -1,8 +1,7 @@
 """
 Tests de integración: registro, login, recuperación de contraseña, catálogo y búsqueda.
 
-Cómo leer este archivo (marcadores, fixtures, imports): ver
-`docs/GUIA_TESTS_AUTOMATIZADOS.md`, sección **10.4**.
+Las fixtures `client` y `db_session` vienen de `tests/conftest.py` (SQLite en memoria, una BD por test).
 """
 
 import pytest
@@ -68,6 +67,23 @@ def test_change_password_rejects_wrong_current(client):
         headers=headers,
     )
     assert r2.status_code == 400
+
+
+@pytest.mark.integration
+def test_change_password_rejects_same_as_current(client):
+    client.post(
+        "/auth/register",
+        json={"email": "same@test.com", "password": "secret129", "full_name": "S"},
+    )
+    r = client.post("/auth/login", json={"email": "same@test.com", "password": "secret129"})
+    headers = {"Authorization": f"Bearer {r.json()['access_token']}"}
+    r2 = client.post(
+        "/auth/change-password",
+        json={"current_password": "secret129", "new_password": "secret129"},
+        headers=headers,
+    )
+    assert r2.status_code == 422
+    assert "distinta de la actual" in r2.text
 
 
 @pytest.mark.integration

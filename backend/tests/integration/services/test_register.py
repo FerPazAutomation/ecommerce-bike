@@ -36,6 +36,23 @@ def test_register_rejects_short_password(client):
 
 
 @pytest.mark.integration
+@pytest.mark.parametrize(
+    ("password", "fragment"),
+    [
+        ("abcdefghij", "al menos un número"),
+        ("1234567890", "al menos una letra"),
+    ],
+)
+def test_register_rejects_password_without_required_characters(client, password, fragment):
+    response = client.post(
+        "/auth/register",
+        json={"email": "policy@example.com", "password": password, "full_name": "x"},
+    )
+    assert response.status_code == 422
+    assert fragment in response.text
+
+
+@pytest.mark.integration
 def test_register_rejects_invalid_email(client):
     response = client.post(
         "/auth/register",

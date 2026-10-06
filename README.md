@@ -1,12 +1,13 @@
 # E-bike Tucson
 
-E-commerce de bicicletas y e-bikes: **React (Vite)** + **FastAPI** + **PostgreSQL**, con carrito por usuario, checkout **Stripe** (sandbox) y pruebas **pytest**.
+E-commerce de bicicletas y e-bikes: **React (Vite)** + **FastAPI** + **PostgreSQL**, con carrito por usuario y checkout **Stripe** (sandbox).
+Automatización de pruebas en tres capas: **pytest** (backend), **Vitest** (frontend) y **Playwright + TypeScript** (API y UI E2E).
 
 ## Requisitos
 
 - Python 3.11+
 - Node.js 20+
-- **PostgreSQL** (recomendado vía [Docker Desktop](https://www.docker.com/products/docker-desktop/)) o instalación local; guía detallada: [`docs/POSTGRES_Y_EJECUCION.md`](docs/POSTGRES_Y_EJECUCION.md).
+- **PostgreSQL** (recomendado vía [Docker Desktop](https://www.docker.com/products/docker-desktop/)) o instalación local (ver [`docs/GUIA_INICIO_CADA_SESION.md`](docs/GUIA_INICIO_CADA_SESION.md#trabajar-sin-docker)).
 
 ## Inicio rápido (Windows, PowerShell)
 
@@ -36,7 +37,7 @@ pip install -e ".[dev]"
 copy .env.example .env
 alembic upgrade head
 python -m scripts.seed
-uvicorn app.main:application --reload --host 0.0.0.0 --port 8000
+uvicorn app.main:application --reload --host 127.0.0.1 --port 8000
 ```
 
 Variables opcionales en `.env`: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `FRONTEND_URL`.
@@ -62,13 +63,46 @@ Abre `http://localhost:5173`.
 
 ## 4. Tests
 
+### Backend (pytest, SQLite en memoria — no requiere Docker)
+
 ```bash
 cd backend
 pytest
 ```
 
-Los tests usan SQLite en memoria (no requieren Docker).
+### Frontend (Vitest)
 
-## Documentación para testers
+```bash
+cd frontend
+npm run test
+```
 
-Ver [`docs/GUIA_TESTERS.md`](docs/GUIA_TESTERS.md).
+### E2E / API real (Playwright + TypeScript)
+
+Con API (y front si corrés UI) levantados:
+
+```powershell
+cd e2e
+npm install
+npx playwright install
+npm run test:api
+npm run test:ui
+```
+
+Datos de usuarios: [`e2e/data/users.ts`](e2e/data/users.ts). Usuario demo tras seed: `demo@example.com` / `demo1234`.
+
+## Enlaces útiles (local)
+
+| Qué | URL |
+|-----|-----|
+| Tienda | http://localhost:5173 |
+| Salud API | http://127.0.0.1:8000/health |
+| **Swagger** | http://127.0.0.1:8000/docs |
+| ReDoc | http://127.0.0.1:8000/redoc |
+
+## Documentación
+
+- [`docs/GUIA_TESTERS.md`](docs/GUIA_TESTERS.md) — flujos, endpoints, usuario demo, capas de tests
+- [`docs/GUIA_INICIO_CADA_SESION.md`](docs/GUIA_INICIO_CADA_SESION.md) — arranque diario y problemas frecuentes
+- [`docs/TECNOLOGIAS.md`](docs/TECNOLOGIAS.md) — qué hace cada herramienta del stack
+- [`AGENTS.md`](AGENTS.md) — flujo de trabajo y convenciones de los tests

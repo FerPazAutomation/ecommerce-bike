@@ -1,15 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useParams } from "react-router-dom";
-import { apiFetch, getToken } from "../api/client";
+import { Link, useLocation, useParams } from "react-router-dom";
+import { apiFetch } from "../api/client";
 import { FallbackImage } from "../components/FallbackImage";
+import { useAuth } from "../hooks/useAuth";
+import { categorySlugLabel } from "../lib/categoryLabels";
+import { formatPrice } from "../lib/formatPrice";
 import { productImageFallback } from "../lib/imageFallback";
 import { getProductImageUrl } from "../lib/productImage";
+import { loginPathWithNext } from "../lib/redirect";
 import type { Product } from "../types";
 
 export function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
+  const location = useLocation();
   const qc = useQueryClient();
-  const token = getToken();
+  const { isLoggedIn } = useAuth();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["product", slug],
@@ -50,15 +55,17 @@ export function ProductDetailPage() {
         }}
       />
       <h1 style={{ marginTop: "1rem", fontFamily: "Syne, sans-serif" }}>{data.name}</h1>
-      <p className="badge">{data.category_slug}</p>
+      <p className="badge">{categorySlugLabel(data.category_slug)}</p>
       <p style={{ color: "var(--muted)", marginTop: "1rem" }}>{data.description}</p>
       <p style={{ fontSize: "1.35rem", fontWeight: 700, color: "var(--accent)", marginTop: "1rem" }}>
-        ${data.price}
+        {formatPrice(data.price)}
       </p>
-      <p style={{ color: "var(--muted)", fontSize: "0.9rem" }}>Stock: {data.stock}</p>
-      {!token ? (
+      <p style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
+        {data.stock > 0 ? `Stock: ${data.stock}` : "Sin stock"}
+      </p>
+      {!isLoggedIn ? (
         <p style={{ marginTop: "1rem" }}>
-          <Link to="/login">Inicia sesión</Link> para añadir al carrito.
+          <Link to={loginPathWithNext(location.pathname)}>Inicia sesión</Link> para añadir al carrito.
         </p>
       ) : (
         <button
@@ -71,8 +78,15 @@ export function ProductDetailPage() {
           {add.isPending ? "Añadiendo…" : "Añadir al carrito"}
         </button>
       )}
+      {add.isSuccess && !add.isPending ? (
+        <p className="form-notice" role="status">
+          Producto añadido. <Link to="/carrito">Ver carrito</Link>
+        </p>
+      ) : null}
       {add.isError && (
-        <p style={{ color: "var(--danger)", marginTop: "0.5rem" }}>{(add.error as Error).message}</p>
+        <p className="form-alert" role="alert">
+          {(add.error as Error).message}
+        </p>
       )}
     </div>
   );

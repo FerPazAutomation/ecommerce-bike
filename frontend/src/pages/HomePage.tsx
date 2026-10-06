@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { apiFetch, getToken } from "../api/client";
+import { apiFetch } from "../api/client";
 import { CartIcon } from "../components/CartIcon";
 import { FallbackImage } from "../components/FallbackImage";
 import { LandingTestimonialCarousel } from "../components/LandingTestimonialCarousel";
@@ -10,6 +10,9 @@ import {
   getVisualPackForCategory,
   LANDING_VIDEO_THUMB,
 } from "../data/categoryVisuals";
+import { useAuth } from "../hooks/useAuth";
+import { categorySlugLabel } from "../lib/categoryLabels";
+import { formatPrice } from "../lib/formatPrice";
 import { selectHomeFeaturedSix } from "../lib/homeFeaturedCatalog";
 import { productImageFallback } from "../lib/imageFallback";
 import { getProductImageUrl } from "../lib/productImage";
@@ -39,7 +42,7 @@ export function HomePage() {
   const [carouselIdx, setCarouselIdx] = useState(0);
   const [loginGateOpen, setLoginGateOpen] = useState(false);
 
-  const isLoggedIn = Boolean(getToken());
+  const { isLoggedIn } = useAuth();
   const catalogHref = `/productos?categoria=${encodeURIComponent(selectedSlug)}`;
 
   useEffect(() => {
@@ -320,9 +323,11 @@ function FeaturedCard({ product }: { product: Product }) {
       />
       <div style={{ fontWeight: 700 }}>{product.name}</div>
       <div className="badge" style={{ marginTop: "0.35rem" }}>
-        {product.category_slug}
+        {categorySlugLabel(product.category_slug)}
       </div>
-      <div style={{ marginTop: "0.5rem", color: "var(--accent-dim)", fontWeight: 700 }}>${product.price}</div>
+      <div style={{ marginTop: "0.5rem", color: "var(--accent-dim)", fontWeight: 700 }}>
+        {formatPrice(product.price)}
+      </div>
     </Link>
   );
 }

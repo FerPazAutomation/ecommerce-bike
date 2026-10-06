@@ -1,14 +1,26 @@
+# Python
 .venv/
 venv/
 __pycache__/
 *.py[cod]
+*.egg-info/
 .pytest_cache/
-backend/tests/e2e/artifacts/
 .coverage
 htmlcov/
+junit-*.xml
+
+# Node / frontend
 node_modules/
 frontend/dist/
+*.tsbuildinfo
+
+# Playwright (e2e/.gitignore cubre el resto)
+test-results/
+
+# Secretos y entorno local
 .env
 backend/.env
 frontend/.env
-*.egg-info/
+
+# Editor
+.vscode/

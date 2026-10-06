@@ -19,7 +19,7 @@ from app.services.auth_service import (
 
 @pytest.mark.unit
 def test_register_user_persists_user(db_session):
-    body = UserCreate(email="u@example.com", password="secret12", full_name="Test User")
+    body = UserCreate(email="u@example.com", password="secret123", full_name="Test User")
     user = register_user(db_session, body)
 
     assert user.id is not None
@@ -29,7 +29,7 @@ def test_register_user_persists_user(db_session):
 
 @pytest.mark.unit
 def test_register_user_raises_if_email_exists(db_session):
-    body = UserCreate(email="dup@example.com", password="secret12", full_name="A")
+    body = UserCreate(email="dup@example.com", password="secret123", full_name="A")
     register_user(db_session, body)
 
     with pytest.raises(EmailAlreadyRegisteredError):
@@ -66,7 +66,7 @@ def test_authenticate_user_raises_invalid_credentials(db_session):
 def test_authenticate_user_raises_inactive(db_session):
     user = register_user(
         db_session,
-        UserCreate(email="off@example.com", password="secret12", full_name="Off"),
+        UserCreate(email="off@example.com", password="secret123", full_name="Off"),
     )
     user.is_active = False
     db_session.add(user)
@@ -75,5 +75,5 @@ def test_authenticate_user_raises_inactive(db_session):
     with pytest.raises(InactiveUserError):
         authenticate_user(
             db_session,
-            UserLogin(email="off@example.com", password="secret12"),
+            UserLogin(email="off@example.com", password="secret123"),
         )

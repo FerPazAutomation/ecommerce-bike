@@ -3,16 +3,11 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useMemo } from "react";
 import { apiFetch } from "../api/client";
 import { FallbackImage } from "../components/FallbackImage";
+import { categorySlugLabel } from "../lib/categoryLabels";
+import { formatPrice } from "../lib/formatPrice";
 import { productImageFallback } from "../lib/imageFallback";
 import { getProductImageUrl } from "../lib/productImage";
 import type { ProductListResponse } from "../types";
-
-const CATEGORY_LABELS: Record<string, string> = {
-  montana: "Montaña",
-  ciudad: "Ciudad",
-  electrica: "Eléctricas",
-  cascos: "Cascos",
-};
 
 const CASCOS_INTRO_SHORT =
   "En bici compartís vía con otros usuarios y frente a un imprevisto el casco es lo que mejor reduce el riesgo de lesión grave en la cabeza. Elegí uno homologado, bien abrochado y reemplazalo si sufrió un golpe fuerte.";
@@ -61,7 +56,7 @@ export function ProductsPage() {
   const mainLimit = isFullCatalog ? 100 : 24;
   const { data, isLoading, error } = useProductList(q, categoria, mainLimit);
 
-  const categoryLabel = categoria ? (CATEGORY_LABELS[categoria] ?? categoria) : "";
+  const categoryLabel = categoria ? categorySlugLabel(categoria) : "";
 
   const helmetItems = useMemo(() => (data?.items ?? []).filter((p) => p.category_slug === "cascos"), [data?.items]);
 
@@ -110,7 +105,7 @@ export function ProductsPage() {
                       fallbackSrc={productImageFallback(p.slug)}
                     />
                     <span className="shop-cascos-card-name">{p.name}</span>
-                    <span className="shop-cascos-card-price">${p.price}</span>
+                    <span className="shop-cascos-card-price">{formatPrice(p.price)}</span>
                   </Link>
                 );
               })}
@@ -127,7 +122,11 @@ export function ProductsPage() {
       )}
 
       {isLoading && <p>Cargando…</p>}
-      {error && <p style={{ color: "var(--danger)" }}>{(error as Error).message}</p>}
+      {error && (
+        <p className="form-alert" role="alert">
+          No pudimos cargar los productos: {(error as Error).message}
+        </p>
+      )}
       <div className="grid-products">
         {gridItems.map((p) => {
           const img = getProductImageUrl(p);
@@ -141,9 +140,11 @@ export function ProductsPage() {
               />
               <div style={{ fontWeight: 700 }}>{p.name}</div>
               <div className="badge" style={{ marginTop: "0.35rem" }}>
-                {p.category_slug}
+                {categorySlugLabel(p.category_slug)}
               </div>
-              <div style={{ marginTop: "0.5rem", color: "var(--accent-dim)", fontWeight: 700 }}>${p.price}</div>
+              <div style={{ marginTop: "0.5rem", color: "var(--accent-dim)", fontWeight: 700 }}>
+                {formatPrice(p.price)}
+              </div>
             </Link>
           );
         })}

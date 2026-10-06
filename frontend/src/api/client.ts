@@ -5,7 +5,19 @@
  * (carrito, checkout); el token se guarda en localStorage tras el login.
  */
 
-const TOKEN_KEY = "ebike_token";
+export const TOKEN_KEY = "ebike_token";
+
+type UnauthorizedHandler = () => void;
+
+let onUnauthorized: UnauthorizedHandler | null = null;
+
+/**
+ * Lo registra `AuthProvider`: se llama cuando una petición autenticada recibe 401
+ * (token vencido, inválido o usuario inexistente).
+ */
+export function setUnauthorizedHandler(handler: UnauthorizedHandler | null): void {
+  onUnauthorized = handler;
+}
 
 /**
  * Base de la API. En desarrollo, si no hay `VITE_API_URL`, se usa el proxy `/api` de Vite
@@ -42,11 +54,16 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const headers = new Headers(options.headers);
   headers.set("Content-Type", "application/json");
+  let sentToken = false;
   if (options.auth !== false) {
     const t = getToken();
-    if (t) headers.set("Authorization", `Bearer ${t}`);
+    if (t) {
+      headers.set("Authorization", `Bearer ${t}`);
+      sentToken = true;
+    }
   }
   const res = await fetch(`${getApiBase()}${path}`, { ...options, headers });
+  if (res.status === 401 && sentToken) onUnauthorized?.();
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     const detail = (err as { detail?: unknown }).detail;
@@ -55,7 +72,7 @@ export async function apiFetch<T>(
       message = detail;
     } else if (Array.isArray(detail)) {
       message = detail
-        .map((d: { msg?: string }) => d.msg)
+        .map((d: { msg?: string }) => d.msg?.replace(/^Value error, /, ""))
         .filter(Boolean)
         .join(" ");
     } else {

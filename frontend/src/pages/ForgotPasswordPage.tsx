@@ -1,14 +1,17 @@
 import { useMutation } from "@tanstack/react-query";
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch } from "../api/client";
+import { FormField } from "../components/FormField";
+import { useForm } from "../hooks/useForm";
+import { validateEmail } from "../lib/validation";
 
 export function ForgotPasswordPage() {
-  const [email, setEmail] = useState("");
   const [done, setDone] = useState(false);
+  const form = useForm({ email: "" }, { email: [validateEmail] });
 
   const send = useMutation({
-    mutationFn: () =>
+    mutationFn: (email: string) =>
       apiFetch<{ message: string }>("/auth/forgot-password", {
         method: "POST",
         auth: false,
@@ -16,11 +19,6 @@ export function ForgotPasswordPage() {
       }),
     onSuccess: () => setDone(true),
   });
-
-  function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    send.mutate();
-  }
 
   return (
     <div className="container login-page-wrap">
@@ -30,31 +28,30 @@ export function ForgotPasswordPage() {
       </p>
 
       {done ? (
-        <p style={{ marginTop: "1.25rem" }}>
+        <p className="form-notice" role="status">
           Si existe una cuenta con ese correo, recibirás instrucciones para restablecer la contraseña. Revisa también la
           carpeta de spam.
         </p>
       ) : (
         <div className="login-page-card">
-          <form onSubmit={onSubmit} style={{ display: "grid", gap: "0.75rem" }}>
-            <input
-              className="input"
+          <form {...form.formProps(({ email }) => send.mutate(email.trim()))}>
+            <FormField
+              label="Correo electrónico"
               type="email"
               required
               autoComplete="email"
-              placeholder="Correo electrónico"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              {...form.field("email")}
             />
             <button type="submit" className="btn" disabled={send.isPending}>
-              {send.isPending ? "…" : "Enviar instrucciones"}
+              {send.isPending ? "Enviando…" : "Enviar instrucciones"}
             </button>
           </form>
+          {send.isError && (
+            <p className="form-alert" role="alert">
+              {(send.error as Error).message}
+            </p>
+          )}
         </div>
-      )}
-
-      {send.isError && (
-        <p style={{ color: "var(--danger)", marginTop: "0.75rem" }}>{(send.error as Error).message}</p>
       )}
 
       <p style={{ marginTop: "1.25rem" }}>
