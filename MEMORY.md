@@ -5,10 +5,10 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 
 ## Estado actual
 
-- **Rama activa:** `practice/test-rebuild` (pusheada a `origin`).
-- **Paso en curso (tests):** API protegida con token (`e2e/tests/api/cart.spec.ts`, en progreso).
-- **Mejoras de producto sin commitear:** tanda 1 en `frontend/src/` (formularios, sesión, precios). Van a una rama `feature/ux-foundation`.
-- **Último verde:** 7 tests Playwright (5 API + 2 UI), 16 tests Vitest, 13 tests `pytest -m integration`, `npm run build` OK.
+- **Repo:** público en GitHub (`FerPazAutomation/ecommerce-bike`), recreado el 2026-10-05 con historial limpio. Ramas remotas: `main` y `practice/test-rebuild`.
+- **Rama activa:** `practice/test-rebuild` (incluye las mejoras de producto de `feature/ux-foundation`).
+- **Paso en curso (tests):** API protegida con token (`e2e/tests/api/cart.spec.ts` + `e2e/helpers/auth.ts`, en progreso).
+- **Último verde:** 7 tests Playwright (5 API + 2 UI), 36 tests Vitest, 35 tests pytest, `npm run build` OK.
 
 ## Roadmap
 
@@ -95,3 +95,4 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 - **2026-09-30** — Se agregan skills de producto (`.cursor/skills/ebike-*`) y comandos de flujo (`.cursor/commands/`). `AGENTS.md` pasa a tener modo tests y modo producto.
 - **2026-09-30** — Primera tanda de producto con las skills: formularios, sesión, precios, carrito y checkout. Se corrige una carrera de redirecciones en la sesión vencida.
 - **2026-09-30** — Validación de formularios (skill `ebike-forms` actualizada): política de contraseña en la API y el front, `useForm`, `PasswordField`, confirmación de contraseña y reglas de servicio técnico.
+- **2026-10-05** — Limpieza para publicar: legacy, scripts sueltos, dependencias y docs obsoletas fuera. CVs y foto borrados de todo el historial con `git filter-repo`; repo de GitHub recreado y ramas subidas limpias.
