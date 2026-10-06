@@ -1,6 +1,22 @@
 # E-bike Tucson
 
-E-commerce de bicicletas y e-bikes: **React (Vite)** + **FastAPI** + **PostgreSQL**, con carrito por usuario y checkout **Stripe** (sandbox).
+[![Tests](https://github.com/FerPazAutomation/ecommerce-bike/actions/workflows/tests.yml/badge.svg)](https://github.com/FerPazAutomation/ecommerce-bike/actions/workflows/tests.yml)
+
+**EN —** Bike and e-bike e-commerce that I use as a real system under test for my QA Automation work.
+React (Vite) + FastAPI + PostgreSQL, per-user cart and Stripe Checkout (sandbox).
+
+| Test layer | Tool | Runs in CI |
+|------------|------|------------|
+| Backend API integration | pytest + TestClient (in-memory SQLite) | Yes, on every PR |
+| Backend unit | pytest | Local |
+| Frontend unit | Vitest | Yes, on every PR |
+| API and UI end-to-end | Playwright + TypeScript ([`e2e/`](e2e)) | Local, against the running app |
+
+Author: **Fernando Paz** · [Portfolio](https://fernando-qa-portfolio.vercel.app) · [LinkedIn](https://www.linkedin.com/in/fernandollanespaz/)
+
+---
+
+**ES —** E-commerce de bicicletas y e-bikes: **React (Vite)** + **FastAPI** + **PostgreSQL**, con carrito por usuario y checkout **Stripe** (sandbox).
 Automatización de pruebas en tres capas: **pytest** (backend), **Vitest** (frontend) y **Playwright + TypeScript** (API y UI E2E).
 
 ## Requisitos
