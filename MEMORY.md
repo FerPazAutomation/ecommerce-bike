@@ -5,9 +5,9 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 
 ## Estado actual
 
-- **Repo:** público en GitHub (`FerPazAutomation/ecommerce-bike`), recreado el 2026-10-05 con historial limpio. Ramas remotas: `main` y `practice/test-rebuild`.
-- **Rama activa:** `practice/test-rebuild` (incluye las mejoras de producto de `feature/ux-foundation`).
-- **Paso en curso (tests):** API protegida con token (`e2e/tests/api/cart.spec.ts` + `e2e/helpers/auth.ts`, en progreso).
+- **Repo:** público en GitHub (`FerPazAutomation/ecommerce-bike`), recreado el 2026-10-05 con historial limpio. Rama remota: `main` (PRs #1, #2 y #3 mergeados).
+- **Rama activa:** `test/cart-items-api` (sale de `main`).
+- **Paso en curso (tests):** Carrito API — agregar, modificar, borrar ítems y errores de stock en `e2e/tests/api/cart-items.spec.ts` (lo escribe Fernando).
 - **Último verde:** 7 tests Playwright (5 API + 2 UI), 36 tests Vitest, 35 tests pytest, `npm run build` OK.
 
 ## Roadmap
@@ -17,10 +17,10 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 - [x] Auth API: login OK, contraseña incorrecta, email inexistente, register + login
 - [x] Login UI con Page Object (válido / inválido)
 - [x] Retirar el E2E viejo en Python (primero archivado, después borrado; queda en el historial de git)
-- [ ] API protegida con token (`/cart`: sin token, token inválido, sin `Bearer`, token válido)
-- [ ] Helper `getToken` en `e2e/helpers/auth.ts`
-- [ ] **PR `practice/test-rebuild` → `main`**
-- [ ] Carrito API (agregar, actualizar, borrar ítems)
+- [x] API protegida con token (`/cart`: sin token, token inválido, sin `Bearer`, token válido)
+- [x] Helpers `getToken`, `authHeader` y `newUserToken` en `e2e/helpers/auth.ts`
+- [x] **PR `practice/test-rebuild` → `main`**
+- [ ] Carrito API (agregar, actualizar, borrar ítems, errores de stock) — en curso en `test/cart-items-api`
 - [ ] Catálogo / carrito UI
 - [ ] Checkout (Stripe sandbox) — último, es el más frágil
 - [ ] CI con GitHub Actions (`npm run test:api` primero)
@@ -74,6 +74,12 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
   - token inválido → 401 `"Invalid token"`
   - usuario inexistente/inactivo → 401 `"User not found"`
 - `GET /cart` → `{ items: [], subtotal: "0" }` — `subtotal` es **string** (Decimal).
+- Carrito (`backend/app/api/routers/cart.py`), todas con token:
+  - `POST /cart/items` `{ product_id, quantity }` → 200 con el ítem (`id`, `quantity`, `product`, `line_total`). Si el producto ya está, **suma** la cantidad (no duplica).
+  - `PATCH /cart/items/{id}` `{ quantity }` → 200; **reemplaza** la cantidad.
+  - `DELETE /cart/items/{id}` → 204 sin body.
+  - Errores: producto inexistente → 404 `"Product not found"`; ítem inexistente o de otro usuario → 404 `"Cart item not found"`; cantidad > stock → 400 `"Not enough stock"`; `quantity < 1` o `product_id < 1` → 422.
+- `GET /products` expone `stock` por producto. El carrito no descuenta stock (solo valida).
 - `POST /auth/register` y `change-password` validan la política de contraseña → 422 con `detail[].msg` en español
   (Pydantic antepone `"Value error, "`). Contraseña actual incorrecta en `change-password` → 400.
 - Swagger: http://127.0.0.1:8000/docs
