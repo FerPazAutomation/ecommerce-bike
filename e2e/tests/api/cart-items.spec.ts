@@ -1,17 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { authHeader, newUserToken } from '../../helpers/auth';
-
-type Product = { id: number; price: string; stock: number };
-type CartItem = { id: number; quantity: number; product: Product; line_total: string };
+import { getProductWithStock, type CartItem } from '../../helpers/cart';
 
 test.describe('Cart Items API', () => {
 
     test('POST /cart/items adds a product and GET /cart returns the added product', async ({ request }) => {
-        // Add a new user and get the products
+        // Add a new user and pick a product with stock
         const token = await newUserToken(request);
-        const getProductsResponse = await request.get('/products');
-        expect(getProductsResponse.status()).toBe(200);
-        const productToAdd : Product = (await getProductsResponse.json()).items[0];
+        const productToAdd = await getProductWithStock(request, 1);
 
         // Add the product to the cart
         const createResponse = await request.post('/cart/items', {
@@ -42,13 +38,7 @@ test.describe('Cart Items API', () => {
 
         // Add a new user and pick a product with enough stock for both additions
         const token = await newUserToken(request);
-        const getProductsResponse = await request.get('/products');
-        expect(getProductsResponse.status()).toBe(200);
-        const products : Product[] = (await getProductsResponse.json()).items;
-        const productToAdd = products.find((product) => product.stock >= totalQuantity);
-        if (!productToAdd) {
-            throw new Error(`No product with stock >= ${totalQuantity}`);
-        }
+        const productToAdd = await getProductWithStock(request, totalQuantity);
 
         // Add the product for the first time
         const firstAddResponse = await request.post('/cart/items', {
