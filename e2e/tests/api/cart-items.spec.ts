@@ -67,17 +67,16 @@ test.describe('Cart Items API', () => {
     });
 
     test('PATCH /cart/items/{id} replaces the quantity', async ({ request }) => {
-        //Different quantities so "replaces" (3) can't be confused with "sums" (5) or "unchanged" (2) (Arrange step)
+        // Different quantities so "replaces" (3) can't be confused with "sums" (5) or "unchanged" (2) (Arrange step)
         const initialQuantity = 2;
         const newQuantity = 3;
 
-        //  Add a new user and pick a product with stock for the larger quantity (Arrange step)
+        // Add a new user and pick a product with stock for the larger quantity (Arrange step)
         const token = await newUserToken(request);
         const productToAdd = await getProductWithStock(request, Math.max(initialQuantity, newQuantity));
 
         // Add the product to the cart (Arrange step)
         const addedItem = await addCartItem(request, token, productToAdd.id, initialQuantity);
-    
 
         // Replace the quantity (Act step)
         const replaceResponse = await request.patch(`/cart/items/${addedItem.id}`, {

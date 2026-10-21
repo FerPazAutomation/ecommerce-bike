@@ -20,7 +20,7 @@ export async function getProductWithStock(request: APIRequestContext, minStock: 
 export async function addCartItem(request: APIRequestContext, token: string, productId: number, quantity: number): Promise<CartItem> {
     const addResponse = await request.post("/cart/items", {
         headers: authHeader(token),
-        data: { product_id: productId, quantity}
+        data: { product_id: productId, quantity }
     });
     expect(addResponse.status(), "POST /cart/items in addCartItem").toBe(200);
     const addedItem: CartItem = await addResponse.json();
