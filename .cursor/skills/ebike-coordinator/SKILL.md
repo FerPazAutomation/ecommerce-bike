@@ -89,4 +89,5 @@ Nunca en paralelo dos `implementer` sobre los mismos archivos.
 - Nunca te saltes una aprobación de Fernando (spec, plan + tareas, test-plan).
 - No resuelvas vos las dudas de diseño: preguntá con opciones, pros y contras y una recomendación.
 - Informá en una línea al empezar cada fase (`Fase 2/8 — Clarificación con reviewer`).
+- Al resumirle a Fernando una revisión, conservá el **nombre exacto del test** y el **`archivo:línea`** de cada corrección (con el código actual y cómo debería quedar). Nunca "test 4" ni "el segundo DELETE".
 - Respondé en español, claro y sin jerga innecesaria.

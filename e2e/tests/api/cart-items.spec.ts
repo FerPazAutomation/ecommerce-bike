@@ -99,4 +99,92 @@ test.describe('Cart Items API', () => {
         expect(cart.items).toEqual([replacedItem]);
         expect(cart.subtotal).toBe(expectedLineTotal);
     });
+    test('DELETE /cart/items/{id} removes the whole line and GET /cart returns an empty cart', async ({ request }) => {
+        // Quantity 2 so we check that DELETE removes the whole line, not just one unit (Arrange step)
+        const quantity = 2;
+        const token = await newUserToken(request);
+        const productToAdd = await getProductWithStock(request, quantity);
+        // Add the product to the cart (Arrange step)
+        const addedItem = await addCartItem(request, token, productToAdd.id, quantity);
+        // Remove the item from the cart (Act step)
+        const removeResponse = await request.delete(`/cart/items/${addedItem.id}`, {
+            headers: authHeader(token)
+        });
+        expect(removeResponse.status()).toBe(204);
+        expect(await removeResponse.text()).toBe('');
+        // Check the cart is empty (Assert step)
+        const listCartResponse = await request.get('/cart', {
+            headers: authHeader(token)
+        });
+        expect(listCartResponse.status()).toBe(200);
+        const cart = await listCartResponse.json();
+        expect(cart.items).toEqual([]);
+        expect(cart.subtotal).toBe('0');
+    });
+    test('DELETE /cart/items/{id} of another user\'s item returns 404 and keeps the item', async ({ request }) => {
+        // Add the cart owner and another user, and pick a product with stock (Arrange step)
+        const token = await newUserToken(request);
+        const anotherToken = await newUserToken(request);
+        const productToAdd = await getProductWithStock(request, 1);
+        // Add the product to the cart (Arrange step)
+        const addedItem = await addCartItem(request, token, productToAdd.id, 1);
+        // Another user tries to remove the item (Act step)
+        const removeResponse = await request.delete(`/cart/items/${addedItem.id}`, {
+            headers: authHeader(anotherToken)
+        });
+        expect(removeResponse.status()).toBe(404); // item not found to delete
+        expect(await removeResponse.json()).toEqual({ detail: 'Cart item not found' });
+        // Check the cart is not empty (Assert step)
+        const listCartResponse = await request.get('/cart', {
+            headers: authHeader(token)
+        });
+        expect(listCartResponse.status()).toBe(200);
+        const cart = await listCartResponse.json();
+        expect(cart.items).toEqual([addedItem]);
+        expect(cart.subtotal).toBe(addedItem.line_total);
+    });
+    test('POST /cart/items with quantity above stock returns 400 and keeps the cart empty', async ({ request }) => {
+        // Add a new user and pick a product with stock (Arrange step)
+        const token = await newUserToken(request);
+        const productToAdd = await getProductWithStock(request, 2);
+        // Try to add more units than the product has in stock (Act step)
+        const addItemResponse = await request.post('/cart/items', {
+            headers: authHeader(token),
+            data: { product_id: productToAdd.id, quantity: productToAdd.stock + 1 }
+        });
+        // Check the stock is not enough to add the quantity requested (Assert step)
+        expect(addItemResponse.status()).toBe(400); 
+        expect(await addItemResponse.json()).toEqual({ "detail": "Not enough stock" });
+        // Check the cart is empty (Assert step)
+        const listCartResponse = await request.get('/cart', {
+            headers: authHeader(token)
+        });
+        expect(listCartResponse.status()).toBe(200);
+        const cart = await listCartResponse.json();
+        expect(cart.items).toEqual([]);
+        expect(cart.subtotal).toBe('0');
+    });
+    test('PATCH /cart/items/{id} with quantity above stock returns 400 and keeps the quantity', async ({ request }) => {
+        // Add a new user and pick a product with stock (Arrange step)
+        const token = await newUserToken(request);
+        const productToAdd = await getProductWithStock(request, 2);
+        // Add the product to the cart (Arrange step)
+        const addedItem = await addCartItem(request, token, productToAdd.id, 1);
+        // Replace the quantity (Act step)
+        const replaceResponse = await request.patch(`/cart/items/${addedItem.id}`, {
+            headers: authHeader(token),
+            data: { quantity: productToAdd.stock + 1 }
+        });
+        // Check the stock is not enough to replace the quantity requested (Assert step)
+        expect(replaceResponse.status()).toBe(400); 
+        expect(await replaceResponse.json()).toEqual({ "detail": "Not enough stock" });
+        // Check the quantity was not changed (Assert step)
+        const listCartResponse = await request.get('/cart', {
+            headers: authHeader(token)
+        });
+        expect(listCartResponse.status()).toBe(200);
+        const cart = await listCartResponse.json();
+        expect(cart.items).toEqual([addedItem]);
+        expect(cart.subtotal).toBe(addedItem.line_total);
+    });
 });

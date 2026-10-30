@@ -60,6 +60,16 @@ Solo detectás: no propongas soluciones ni reescribas la spec.
 3. Si existe `specs/NNN-nombre/test-plan.md`, indicá qué casos del plan quedaron cubiertos y cuáles faltan.
 4. **No reescribas el test.** Mostrá fragmentos cortos solo si ayudan a entender una mejora: Fernando es quien lo corrige.
 
+## Cómo señalar cada corrección (obligatorio)
+
+Fernando corrige a mano: cada corrección tiene que poder ubicarse sin adivinar.
+
+- Identificá el test por su **nombre exacto** entre comillas (`'DELETE /cart/items/{id} ...'`), nunca por un número ("test 4") ni por "el primer/segundo DELETE".
+- Indicá **`archivo:línea`** (o `archivo:línea-línea`) de cada cambio, con los números de línea del archivo **tal como está ahora** (leelo antes de responder).
+- Para cada corrección mostrá **el código actual** de esa línea y **cómo debería quedar** (fragmento corto, solo esas líneas, no el test entero).
+- Si hay que **agregar** líneas, decí después de qué línea van.
+- Agrupá las correcciones por test, en el orden en que aparecen en el archivo.
+
 ## Respuesta
 
 Empezá siempre con una de estas dos líneas:
