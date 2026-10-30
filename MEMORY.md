@@ -5,10 +5,11 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 
 ## Estado actual
 
-- **Repo:** público en GitHub (`FerPazAutomation/ecommerce-bike`), recreado el 2026-10-05 con historial limpio. Ramas remotas: `main` y `practice/test-rebuild`.
-- **Rama activa:** `practice/test-rebuild` (incluye las mejoras de producto de `feature/ux-foundation`).
-- **Paso en curso (tests):** API protegida con token (`e2e/tests/api/cart.spec.ts` + `e2e/helpers/auth.ts`, en progreso).
-- **Último verde:** 7 tests Playwright (5 API + 2 UI), 36 tests Vitest, 35 tests pytest, `npm run build` OK.
+- **Repo:** público en GitHub (`FerPazAutomation/ecommerce-bike`), recreado el 2026-10-05 con historial limpio. Rama remota: `main` (PRs #1, #2 y #3 mergeados).
+- **Rama activa:** `test/cart-items-api` (sale de `main`).
+- **Paso en curso (tests):** Carrito API **terminado** (7 tests en `e2e/tests/api/cart-items.spec.ts`, plan en `specs/001-cart-api/test-plan.md`). Falta PR `test/cart-items-api` → `main`.
+- **Último verde (2026-10-29):** 18 tests Playwright (16 API + 2 UI), 16 pytest `-m integration`. Vitest (36) y `npm run build` sin cambios desde el 2026-09-30 (no se tocó el front).
+- **Sistema multiagente:** coordinador (`/coordinar`, skill `ebike-coordinator`) + subagentes `planner`, `implementer`, `reviewer` en `.cursor/agents/`. Guía: [`docs/GUIA_AGENTES.md`](docs/GUIA_AGENTES.md). Primer uso real: flujo de tests del bloque Carrito API.
 
 ## Roadmap
 
@@ -17,10 +18,11 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 - [x] Auth API: login OK, contraseña incorrecta, email inexistente, register + login
 - [x] Login UI con Page Object (válido / inválido)
 - [x] Retirar el E2E viejo en Python (primero archivado, después borrado; queda en el historial de git)
-- [ ] API protegida con token (`/cart`: sin token, token inválido, sin `Bearer`, token válido)
-- [ ] Helper `getToken` en `e2e/helpers/auth.ts`
-- [ ] **PR `practice/test-rebuild` → `main`**
-- [ ] Carrito API (agregar, actualizar, borrar ítems)
+- [x] API protegida con token (`/cart`: sin token, token inválido, sin `Bearer`, token válido)
+- [x] Helpers `getToken`, `authHeader` y `newUserToken` en `e2e/helpers/auth.ts`
+- [x] **PR `practice/test-rebuild` → `main`**
+- [x] Carrito API (agregar, sumar, reemplazar, borrar línea, ítem ajeno, errores de stock en POST y PATCH) — `test/cart-items-api`, falta PR
+- [ ] Opcionales de Carrito API (documentados en `specs/001-cart-api/test-plan.md`): borrar uno de dos ítems y recalcular subtotal (requiere helper `getProductsWithStock`), PATCH de ítem ajeno, POST que supera stock al sumar
 - [ ] Catálogo / carrito UI
 - [ ] Checkout (Stripe sandbox) — último, es el más frágil
 - [ ] CI con GitHub Actions (`npm run test:api` primero)
@@ -65,6 +67,12 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 | Política de contraseña: > 8 caracteres, ≤ 72 bytes, letra, número, sin espacios en los bordes | Formulario "serio" sin volverse hostil; mismas reglas y mensajes en `schemas/auth.py` y `lib/validation.ts`. |
 | El login no aplica la política | Usuarios existentes (ej. `demo1234`) tienen que poder entrar. |
 | Validación propia (`useForm`) sin react-hook-form ni zod | Forms chicos; no suma dependencias. |
+| Sistema multiagente en Cursor: coordinador = chat principal (skill + `/coordinar`), subagentes en `.cursor/agents/` | Cursor no tiene agentes principales personalizados; los subagentes no pueden hablar con Fernando a mitad de tarea. |
+| Un test-plan por **bloque** (no por endpoint), con columna "Automatizar Sí/No/Opcional" y motivo | Automatizar por riesgo, no por inercia; lo no automatizado queda documentado. |
+| No repetir los 401 (sin token / token inválido) en cada endpoint del carrito | Misma dependencia `get_current_user`, ya probada en `cart.spec.ts`. |
+| Cantidades de stock derivadas del dato real (`product.stock + 1`), nunca fijas | Un número fijo depende del seed y falla sin bug si cambia el producto. |
+| En borrados, cantidad 2 | Con 1 no se distingue "borra la línea" de "resta una unidad". |
+| El reviewer señala cada corrección con nombre exacto del test + `archivo:línea` + código actual → esperado | Fernando corrige a mano; "test 4" o "el segundo DELETE" confunde. |
 
 ## Datos útiles de la API
 
@@ -74,6 +82,14 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
   - token inválido → 401 `"Invalid token"`
   - usuario inexistente/inactivo → 401 `"User not found"`
 - `GET /cart` → `{ items: [], subtotal: "0" }` — `subtotal` es **string** (Decimal).
+- Carrito (`backend/app/api/routers/cart.py`), todas con token:
+  - `POST /cart/items` `{ product_id, quantity }` → 200 con el ítem (`id`, `quantity`, `product`, `line_total`). Si el producto ya está, **suma** la cantidad (no duplica).
+  - `PATCH /cart/items/{id}` `{ quantity }` → 200; **reemplaza** la cantidad.
+  - `DELETE /cart/items/{id}` → 204 sin body.
+  - Errores: producto inexistente → 404 `"Product not found"`; ítem inexistente o de otro usuario → 404 `"Cart item not found"`; cantidad > stock → 400 `"Not enough stock"`; `quantity < 1` o `product_id < 1` → 422.
+  - Stock: `quantity == stock` → 200; `stock + 1` → 400 y no cambia nada (ni crea la línea ni modifica la cantidad). Un POST que **al sumarse** supera el stock también da 400.
+  - `DELETE /cart/items/{id}` borra la **línea entera** (no una unidad). Id `0` o `-1` → 404 (no 422, a diferencia de `POST`); id no numérico → 422 `int_parsing`. La auth se valida antes que el id (sin token + `abc` → 401).
+- `GET /products` expone `stock` por producto. El carrito no descuenta stock (solo valida).
 - `POST /auth/register` y `change-password` validan la política de contraseña → 422 con `detail[].msg` en español
   (Pydantic antepone `"Value error, "`). Contraseña actual incorrecta en `change-password` → 400.
 - Swagger: http://127.0.0.1:8000/docs
@@ -86,6 +102,8 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 | Login 422 con email `.test` | email-validator rechaza dominios reservados | Usar `@example.com`. |
 | Docker arriba pero la web no anda | Docker solo levanta Postgres | Levantar también API y front. |
 | pytest abre navegadores / pide `--browser` | `addopts` viejo de pytest-playwright | No usar `addopts` de Playwright en `pyproject.toml`. |
+| `expect(...).toEqual(...)` falla con `Received: Promise {}` | Falta `await` antes de `response.json()` / `.text()` | `expect(await response.json()).toEqual(...)`. |
+| Tests UI fallan desde el agente con `Executable doesn't exist ... cursor-sandbox-cache` | El sandbox del agente cambia `PLAYWRIGHT_BROWSERS_PATH` | Correr sin sandbox y con `Remove-Item Env:PLAYWRIGHT_BROWSERS_PATH`. En la terminal de Fernando no pasa. |
 
 ## Registro de sesiones
 
@@ -96,3 +114,5 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 - **2026-09-30** — Primera tanda de producto con las skills: formularios, sesión, precios, carrito y checkout. Se corrige una carrera de redirecciones en la sesión vencida.
 - **2026-09-30** — Validación de formularios (skill `ebike-forms` actualizada): política de contraseña en la API y el front, `useForm`, `PasswordField`, confirmación de contraseña y reglas de servicio técnico.
 - **2026-10-05** — Limpieza para publicar: legacy, scripts sueltos, dependencias y docs obsoletas fuera. CVs y foto borrados de todo el historial con `git filter-repo`; repo de GitHub recreado y ramas subidas limpias.
+- **2026-10-20/21** — Sistema multiagente para Cursor (coordinador + `planner`, `implementer`, `reviewer`, skill `ebike-sdd`, guía `docs/GUIA_AGENTES.md`) en `chore/agentes-cursor`, mergeado en `test/cart-items-api`.
+- **2026-10-21/29** — Carrito API cerrado con el flujo de tests multiagente: test-plan del bloque (`specs/001-cart-api/`), 4 tests nuevos (DELETE línea entera, DELETE ajeno, POST y PATCH > stock), 3 vueltas de revisión. Regla nueva del reviewer: nombre exacto + `archivo:línea`.
