@@ -196,6 +196,7 @@ Otros límites a tener en cuenta:
 - Cada llamada a un subagente arranca de cero: el contexto que no se le pasa, no existe.
 - Todos usan `model: inherit` (el modelo del chat). Se puede cambiar por subagente en su frontmatter, por ejemplo un modelo distinto para el reviewer, así no revisa el mismo modelo que implementó.
 - Más subagentes = más consumo. Para cosas chicas, el flujo completo no compensa.
+- **Contexto del chat:** al llegar al 65-80 % del indicador de contexto de Cursor, o al cambiar de tarea, el coordinador propone seguir en un chat nuevo. Antes deja el traspaso en `MEMORY.md` y en `specs/NNN-nombre/`. El chat nuevo arranca con `/iniciar-sesion` y `/coordinar continuar NNN`. Los subagentes ayudan a no llenarlo, porque trabajan con contexto propio.
 
 ## 8. Relación con los comandos existentes
 

@@ -29,6 +29,7 @@ Antes de hacer nada, leé también [`MEMORY.md`](MEMORY.md): tiene el estado act
 5. Sí puede hacer sin pedir permiso: leer archivos, correr tests, probar endpoints, actualizar docs y `MEMORY.md`.
 6. Ante una duda de diseño, mostrar opciones con pros y contras y recomendar una; no decidir en silencio.
 7. Responder en español, claro y sin jerga innecesaria.
+8. **Contexto del chat:** cuando el indicador de contexto de Cursor llegue al **65-80 %**, o al pasar a una tarea distinta, el agente lo avisa y propone seguir en un chat nuevo. Antes de cortar deja un traspaso: `MEMORY.md` actualizado (rama, paso, qué falta) y, si hay una spec en curso, su estado en `specs/NNN-nombre/`. El chat nuevo arranca con `/iniciar-sesion`. Para no llenar el contexto, el trabajo pesado (explorar, implementar, revisar) se delega en subagentes, que tienen contexto propio.
 
 ## Comandos (`.cursor/commands/`)
 
