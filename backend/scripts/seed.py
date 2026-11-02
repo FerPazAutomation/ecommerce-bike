@@ -6,6 +6,7 @@ Los productos y rutas `/images/catalog/...` se generan a partir de los PNG reale
 
 Los cascos se cargan de forma idempotente desde `frontend/public/images/catalog/cascos/cascoN.*`
 al ejecutar el seed (aunque la base ya esté sembrada), vía `ensure_cascos_category_and_products`.
+Después, `ensure_out_of_stock_demo_product` deja `casco-linea-08` en stock 0 en cada corrida.
 
 Ejecutar desde la carpeta `backend`:  python -m scripts.seed
 
@@ -248,6 +249,21 @@ def ensure_cascos_category_and_products(db) -> int:
     return added
 
 
+# Último casco que se crea: queda fuera de los primeros 24 de `GET /products` (los que usan los tests
+# del carrito) y entra en la vista previa "Cascos destacados" (primeros 8 cascos).
+OUT_OF_STOCK_DEMO_SLUG = "casco-linea-08"
+
+
+def ensure_out_of_stock_demo_product(db) -> bool:
+    """Deja el casco de demo en stock 0 en cada corrida (idempotente). Retorna False si no existe."""
+    product = db.query(Product).filter(Product.slug == OUT_OF_STOCK_DEMO_SLUG).first()
+    if not product:
+        print(f"Aviso: no existe el producto {OUT_OF_STOCK_DEMO_SLUG}; no se dejó ninguno sin stock.")
+        return False
+    product.stock = 0
+    return True
+
+
 def build_products_from_scan() -> list[tuple[str, str, str, str, Decimal, int, int]]:
     scan = scan_catalog_png_indices()
     rows: list[tuple[str, str, str, str, Decimal, int, int]] = []
@@ -333,6 +349,8 @@ def run() -> None:
 
         ensure_demo_user(db)
         n_cascos = ensure_cascos_category_and_products(db)
+        db.flush()
+        ensure_out_of_stock_demo_product(db)
         db.commit()
         if n_cascos:
             print(f"Cascos: se añadieron {n_cascos} producto(s) nuevos.")

@@ -96,7 +96,7 @@ export function Layout({ children }: { children: ReactNode }) {
               {shopOpen && (
                 <div className="nav-dropdown-panel" role="menu">
                   <Link to="/productos" role="menuitem" onClick={() => setShopOpen(false)}>
-                    Todas las bicicletas
+                    Todos los productos
                   </Link>
                   {!navCategories.some((c) => c.slug === "cascos") && (
                     <Link to="/productos?categoria=cascos" role="menuitem" onClick={() => setShopOpen(false)}>
@@ -222,7 +222,7 @@ export function Layout({ children }: { children: ReactNode }) {
               Inicio
             </Link>
             <Link to="/productos" onClick={() => setDrawerOpen(false)}>
-              Todas las bicicletas
+              Todos los productos
             </Link>
             <Link to="/servicio" onClick={() => setDrawerOpen(false)}>
               Servicio

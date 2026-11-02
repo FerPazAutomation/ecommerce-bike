@@ -4,15 +4,20 @@
  * Por qué redirect: en modo test, Stripe hospeda el formulario de pago (menos superficie PCI en tu backend).
  */
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch } from "../api/client";
+import { StockDialog } from "../components/StockDialog";
 import { useAuth } from "../hooks/useAuth";
 import { formatPrice } from "../lib/formatPrice";
+import { STOCK_WARNING_TEXT, cartHasStockIssues, isCheckoutStockError } from "../lib/stock";
 import type { CartResponse, CheckoutResponse } from "../types";
 
 export function CheckoutPage() {
   const { token } = useAuth();
+  const qc = useQueryClient();
+  const [stockDialogOpen, setStockDialogOpen] = useState(false);
 
   const { data: cart, isLoading } = useQuery({
     queryKey: ["cart", token],
@@ -25,13 +30,26 @@ export function CheckoutPage() {
     onSuccess: (res) => {
       if (res.checkout_url) window.location.href = res.checkout_url;
     },
+    onError: (err) => {
+      if (!isCheckoutStockError(err)) return;
+      setStockDialogOpen(true);
+      qc.invalidateQueries({ queryKey: ["cart"] });
+    },
   });
 
   const isEmpty = !cart || cart.items.length === 0;
+  const hasStockIssues = cartHasStockIssues(cart);
+  const payErrorMessage = pay.isError && !isCheckoutStockError(pay.error) ? (pay.error as Error).message : null;
 
   return (
     <div className="container" style={{ maxWidth: "520px" }}>
       <h1>Checkout</h1>
+
+      {hasStockIssues && (
+        <p className="form-alert" role="alert">
+          {STOCK_WARNING_TEXT} <Link to="/carrito">Ir al carrito</Link>
+        </p>
+      )}
 
       {isLoading ? (
         <p>Cargando resumen…</p>
@@ -72,16 +90,17 @@ export function CheckoutPage() {
         type="button"
         className="btn"
         style={{ marginTop: "1rem" }}
-        disabled={pay.isPending || isLoading || isEmpty}
+        disabled={pay.isPending || isLoading || isEmpty || hasStockIssues}
         onClick={() => pay.mutate()}
       >
         {pay.isPending ? "Preparando pago…" : "Pagar con Stripe"}
       </button>
-      {pay.isError && (
+      {payErrorMessage && (
         <p className="form-alert" role="alert">
-          {(pay.error as Error).message}
+          {payErrorMessage}
         </p>
       )}
+      <StockDialog open={stockDialogOpen} onClose={() => setStockDialogOpen(false)} />
       <p style={{ marginTop: "1rem" }}>
         <Link to="/carrito">Volver al carrito</Link>
       </p>

@@ -49,10 +49,12 @@ def test_cart_flow_and_checkout_mock(client, db_session: Session):
     r = client.post("/cart/items", headers=headers, json={"product_id": p.id, "quantity": 2})
     assert r.status_code == 200
     assert r.json()["quantity"] == 2
+    assert r.json()["has_enough_stock"] is True
 
     r2 = client.get("/cart", headers=headers)
     assert r2.status_code == 200
     assert len(r2.json()["items"]) == 1
+    assert r2.json()["items"][0]["has_enough_stock"] is True
 
     fake_session = MagicMock()
     fake_session.id = "cs_test_123"
@@ -86,3 +88,87 @@ def test_cart_flow_and_checkout_mock(client, db_session: Session):
     listed = r_list.json()
     assert len(listed) >= 1
     assert any(o["id"] == oid for o in listed)
+
+
+@pytest.fixture
+def stripe_configured():
+    with patch.dict(
+        os.environ,
+        {"STRIPE_SECRET_KEY": "sk_test_fake", "FRONTEND_URL": "http://localhost:5173"},
+    ):
+        from app.core.config import get_settings
+
+        get_settings.cache_clear()
+        yield
+    get_settings.cache_clear()
+
+
+def _buyer_with_product(client, db_session: Session, stock: int) -> tuple[dict, Product]:
+    user = User(
+        email="stock-buyer@example.com",
+        hashed_password=hash_password("pw123456"),
+        full_name="Stock Buyer",
+    )
+    db_session.add(user)
+    cat = Category(slug="c", name="C", description="")
+    db_session.add(cat)
+    db_session.commit()
+    db_session.refresh(cat)
+    p = Product(
+        category_id=cat.id,
+        name="E-bike",
+        slug="e-bike",
+        description="",
+        price=Decimal("99.00"),
+        stock=stock,
+        is_active=True,
+    )
+    db_session.add(p)
+    db_session.commit()
+    db_session.refresh(p)
+
+    login = client.post("/auth/login", json={"email": "stock-buyer@example.com", "password": "pw123456"})
+    headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+    return headers, p
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("stock_after", [1, 0])
+def test_checkout_rejects_with_409_when_stock_dropped(client, db_session: Session, stripe_configured, stock_after):
+    headers, p = _buyer_with_product(client, db_session, stock=3)
+    r = client.post("/cart/items", headers=headers, json={"product_id": p.id, "quantity": 2})
+    assert r.status_code == 200
+
+    p.stock = stock_after
+    db_session.commit()
+
+    cart_before = client.get("/cart", headers=headers).json()
+    assert cart_before["items"][0]["has_enough_stock"] is False
+
+    fake_session = MagicMock()
+    with patch("stripe.checkout.Session.create", return_value=fake_session) as create:
+        r_checkout = client.post("/orders/checkout", headers=headers)
+
+    assert r_checkout.status_code == 409
+    assert r_checkout.json() == {"detail": "Not enough stock for some cart items"}
+    create.assert_not_called()
+    assert client.get("/orders", headers=headers).json() == []
+    assert client.get("/cart", headers=headers).json() == cart_before
+
+
+@pytest.mark.integration
+def test_checkout_with_quantity_equal_to_stock_returns_200(client, db_session: Session, stripe_configured):
+    headers, p = _buyer_with_product(client, db_session, stock=3)
+    r = client.post("/cart/items", headers=headers, json={"product_id": p.id, "quantity": 3})
+    assert r.status_code == 200
+    assert r.json()["has_enough_stock"] is True
+
+    fake_session = MagicMock()
+    fake_session.id = "cs_test_equal"
+    fake_session.url = "https://stripe.test/checkout"
+    with patch("stripe.checkout.Session.create", return_value=fake_session) as create:
+        r_checkout = client.post("/orders/checkout", headers=headers)
+
+    assert r_checkout.status_code == 200
+    assert r_checkout.json()["checkout_url"] == "https://stripe.test/checkout"
+    create.assert_called_once()

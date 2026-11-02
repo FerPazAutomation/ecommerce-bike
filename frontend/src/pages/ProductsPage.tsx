@@ -3,10 +3,12 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useMemo } from "react";
 import { apiFetch } from "../api/client";
 import { FallbackImage } from "../components/FallbackImage";
+import { StockBadge } from "../components/StockBadge";
 import { categorySlugLabel } from "../lib/categoryLabels";
 import { formatPrice } from "../lib/formatPrice";
 import { productImageFallback } from "../lib/imageFallback";
 import { getProductImageUrl } from "../lib/productImage";
+import { isOutOfStock } from "../lib/stock";
 import type { ProductListResponse } from "../types";
 
 const CASCOS_INTRO_SHORT =
@@ -93,7 +95,7 @@ export function ProductsPage() {
             <p style={{ color: "var(--muted)", fontSize: "0.95rem", lineHeight: 1.55, margin: 0 }}>{CASCOS_INTRO_SHORT}</p>
           )}
           {isFullCatalog && cascosPreview.length > 0 && (
-            <div className="shop-cascos-preview-grid" aria-label="Cascos destacados">
+            <div className="shop-cascos-preview-grid" role="region" aria-label="Cascos destacados">
               {cascosPreview.map((p) => {
                 const img = getProductImageUrl(p);
                 return (
@@ -105,6 +107,7 @@ export function ProductsPage() {
                       fallbackSrc={productImageFallback(p.slug)}
                     />
                     <span className="shop-cascos-card-name">{p.name}</span>
+                    {isOutOfStock(p.stock) && <StockBadge className="shop-cascos-card-stock" />}
                     <span className="shop-cascos-card-price">{formatPrice(p.price)}</span>
                   </Link>
                 );
@@ -139,8 +142,9 @@ export function ProductsPage() {
                 fallbackSrc={productImageFallback(p.slug)}
               />
               <div style={{ fontWeight: 700 }}>{p.name}</div>
-              <div className="badge" style={{ marginTop: "0.35rem" }}>
-                {categorySlugLabel(p.category_slug)}
+              <div style={{ marginTop: "0.35rem", display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+                <span className="badge">{categorySlugLabel(p.category_slug)}</span>
+                {isOutOfStock(p.stock) && <StockBadge />}
               </div>
               <div style={{ marginTop: "0.5rem", color: "var(--accent-dim)", fontWeight: 700 }}>
                 {formatPrice(p.price)}

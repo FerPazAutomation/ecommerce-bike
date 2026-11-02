@@ -5,11 +5,11 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 
 ## Estado actual
 
-- **Repo:** público en GitHub (`FerPazAutomation/ecommerce-bike`), recreado el 2026-10-05 con historial limpio. Rama remota: `main` (PRs #1, #2 y #3 mergeados).
-- **Rama activa:** `test/cart-items-api` (sale de `main`).
-- **Paso en curso (tests):** Carrito API **terminado** (7 tests en `e2e/tests/api/cart-items.spec.ts`, plan en `specs/001-cart-api/test-plan.md`). Falta PR `test/cart-items-api` → `main`.
-- **Último verde (2026-10-29):** 18 tests Playwright (16 API + 2 UI), 16 pytest `-m integration`. Vitest (36) y `npm run build` sin cambios desde el 2026-09-30 (no se tocó el front).
-- **Sistema multiagente:** coordinador (`/coordinar`, skill `ebike-coordinator`) + subagentes `planner`, `implementer`, `reviewer` en `.cursor/agents/`. Guía: [`docs/GUIA_AGENTES.md`](docs/GUIA_AGENTES.md). Primer uso real: flujo de tests del bloque Carrito API.
+- **Repo:** público en GitHub (`FerPazAutomation/ecommerce-bike`), recreado el 2026-10-05 con historial limpio. Rama remota: `main` (PRs #1 a #4 mergeados; #4 = Carrito API + sistema multiagente).
+- **Rama activa:** `sim/catalogo-sin-stock` (sale de `main`). **Sin commitear todavía.** Nació como simulación del flujo de producto, pero el trabajo es real y está aprobado: conviene renombrarla a `feature/catalogo-sin-stock` antes del PR.
+- **Paso en curso (producto):** spec `specs/002-catalogo-sin-stock/` **implementada** (16 RF, 10 tareas, reviewer APROBADO). Próxima acción: commits + PR. Después, casos e2e de UI para Fernando (ver "Casos UI nuevos").
+- **Último verde (2026-10-30):** Playwright 18 (16 API + 2 UI), Vitest 47, pytest 48 (27 unit + 21 integration), `npm run build` OK.
+- **Sistema multiagente:** coordinador (`/coordinar`, skill `ebike-coordinator`) + subagentes `planner`, `implementer`, `reviewer` en `.cursor/agents/`. Guía: [`docs/GUIA_AGENTES.md`](docs/GUIA_AGENTES.md). Usado en el flujo de tests (Carrito API) y en el flujo de producto completo (spec 002). Regla nueva: chat nuevo al 65-80 % de contexto.
 
 ## Roadmap
 
@@ -21,7 +21,7 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 - [x] API protegida con token (`/cart`: sin token, token inválido, sin `Bearer`, token válido)
 - [x] Helpers `getToken`, `authHeader` y `newUserToken` en `e2e/helpers/auth.ts`
 - [x] **PR `practice/test-rebuild` → `main`**
-- [x] Carrito API (agregar, sumar, reemplazar, borrar línea, ítem ajeno, errores de stock en POST y PATCH) — `test/cart-items-api`, falta PR
+- [x] Carrito API (agregar, sumar, reemplazar, borrar línea, ítem ajeno, errores de stock en POST y PATCH) — PR #4
 - [ ] Opcionales de Carrito API (documentados en `specs/001-cart-api/test-plan.md`): borrar uno de dos ítems y recalcular subtotal (requiere helper `getProductsWithStock`), PATCH de ítem ajeno, POST que supera stock al sumar
 - [ ] Catálogo / carrito UI
 - [ ] Checkout (Stripe sandbox) — último, es el más frágil
@@ -35,7 +35,10 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 - [x] Carrito (label y tope de cantidad, errores visibles) y checkout con resumen del pedido
 - [x] Validación de formularios: política de contraseña en API y front (espejo), `useForm`, `PasswordField` con requisitos y Mostrar/Ocultar, "Repetir contraseña" en registro y cuenta, reglas de servicio técnico
 - [ ] Homepage: partir `HomePage.tsx` en secciones y estados de carga/error/vacío
-- [ ] Catálogo: filtros en la URL y estado "Sin stock" en tarjetas
+- [x] Catálogo "Sin stock" (spec 002): etiqueta en grilla y "Cascos destacados" (región accesible), detalle sin invitar a login, marca de stock en el carrito, checkout que revalida stock (alerta al entrar + diálogo si el pago da 409), menú "Todos los productos", seed con `casco-linea-08` en stock 0
+- [ ] Catálogo: filtros en la URL
+- [ ] Descontar stock al confirmar el pago (hoy ninguna compra descuenta stock: dos compradores pueden pagar la última unidad)
+- [ ] Pendientes de la spec 002 (sección final de `spec.md`): foco al cerrar el diálogo, links "Ir al carrito" duplicados, test de `seed.run()` completo, assert de `has_enough_stock` en PATCH, input de cantidad con `max=0` en el carrito
 
 ### Casos UI nuevos para automatizar (los escribe Fernando)
 
@@ -47,6 +50,10 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 - [ ] Registro con "Repetir contraseña" distinta → "Las contraseñas no coinciden"
 - [ ] API: `POST /auth/register` con contraseña sin número → 422 con el mensaje de la política
 - [ ] API: `POST /auth/change-password` con la misma contraseña → 422 "distinta de la actual"
+- [ ] Catálogo: `casco-linea-08` muestra "Sin stock" en `getByRole('region', { name: 'Cascos destacados' })` y con `?categoria=cascos`; ningún otro producto la muestra
+- [ ] Detalle de `casco-linea-08` sin sesión → "Sin stock" y sin "Inicia sesión para añadir al carrito"; con sesión → "Añadir al carrito" deshabilitado
+- [ ] Checkout con 409 simulado (`page.route` sobre `POST /orders/checkout`) → diálogo "Sin stock suficiente"; buscar "Ir al carrito" **dentro** del diálogo (hay otro link igual en la alerta) y probar Escape con `page.keyboard.press`
+- [ ] Menú "Tienda" → link "Todos los productos" lleva a `/productos`
 
 ## Decisiones tomadas
 
@@ -71,6 +78,9 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 | Un test-plan por **bloque** (no por endpoint), con columna "Automatizar Sí/No/Opcional" y motivo | Automatizar por riesgo, no por inercia; lo no automatizado queda documentado. |
 | No repetir los 401 (sin token / token inválido) en cada endpoint del carrito | Misma dependencia `get_current_user`, ya probada en `cart.spec.ts`. |
 | Cantidades de stock derivadas del dato real (`product.stock + 1`), nunca fijas | Un número fijo depende del seed y falla sin bug si cambia el producto. |
+| Checkout revalida stock en el backend: 409 `"Not enough stock for some cart items"` (orden: Stripe 503 → carrito vacío 400 → stock 409) | Pagar sin stock es una compra errónea grave; 409 no se confunde con el 400 `"Not enough stock"` del carrito. |
+| `has_enough_stock` por línea en las respuestas del carrito, calculado en el backend | Una sola regla (`services/stock.py`) para carrito y checkout; el front solo refleja. |
+| Seed idempotente deja `casco-linea-08` en stock 0 | Dato reproducible para "Sin stock"; es el último producto, queda fuera de los 24 primeros que usan los tests del carrito y dentro de "Cascos destacados". |
 | En borrados, cantidad 2 | Con 1 no se distingue "borra la línea" de "resta una unidad". |
 | El reviewer señala cada corrección con nombre exacto del test + `archivo:línea` + código actual → esperado | Fernando corrige a mano; "test 4" o "el segundo DELETE" confunde. |
 
@@ -89,7 +99,9 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
   - Errores: producto inexistente → 404 `"Product not found"`; ítem inexistente o de otro usuario → 404 `"Cart item not found"`; cantidad > stock → 400 `"Not enough stock"`; `quantity < 1` o `product_id < 1` → 422.
   - Stock: `quantity == stock` → 200; `stock + 1` → 400 y no cambia nada (ni crea la línea ni modifica la cantidad). Un POST que **al sumarse** supera el stock también da 400.
   - `DELETE /cart/items/{id}` borra la **línea entera** (no una unidad). Id `0` o `-1` → 404 (no 422, a diferencia de `POST`); id no numérico → 422 `int_parsing`. La auth se valida antes que el id (sin token + `abc` → 401).
-- `GET /products` expone `stock` por producto. El carrito no descuenta stock (solo valida).
+- `GET /products` expone `stock` por producto. El carrito no descuenta stock (solo valida). Las líneas del carrito traen `has_enough_stock` (bool).
+- `POST /orders/checkout` con alguna línea sin stock suficiente → 409 `{"detail":"Not enough stock for some cart items"}`; no crea orden ni llama a Stripe. Requiere `STRIPE_SECRET_KEY` (sin ella da 503 antes).
+- Producto sin stock fijo del seed: `casco-linea-08` ("Casco Trekking Allround"). La grilla de "todos los productos" no muestra cascos: se ven en "Cascos destacados" o con `?categoria=cascos`.
 - `POST /auth/register` y `change-password` validan la política de contraseña → 422 con `detail[].msg` en español
   (Pydantic antepone `"Value error, "`). Contraseña actual incorrecta en `change-password` → 400.
 - Swagger: http://127.0.0.1:8000/docs
@@ -116,3 +128,4 @@ Reglas de trabajo: [`AGENTS.md`](AGENTS.md).
 - **2026-10-05** — Limpieza para publicar: legacy, scripts sueltos, dependencias y docs obsoletas fuera. CVs y foto borrados de todo el historial con `git filter-repo`; repo de GitHub recreado y ramas subidas limpias.
 - **2026-10-20/21** — Sistema multiagente para Cursor (coordinador + `planner`, `implementer`, `reviewer`, skill `ebike-sdd`, guía `docs/GUIA_AGENTES.md`) en `chore/agentes-cursor`, mergeado en `test/cart-items-api`.
 - **2026-10-21/29** — Carrito API cerrado con el flujo de tests multiagente: test-plan del bloque (`specs/001-cart-api/`), 4 tests nuevos (DELETE línea entera, DELETE ajeno, POST y PATCH > stock), 3 vueltas de revisión. Regla nueva del reviewer: nombre exacto + `archivo:línea`.
+- **2026-10-30** — PR #4 mergeado. Primer flujo de producto completo con los 3 agentes (spec 002 "Sin stock"): 2 rondas de preguntas, revisión de spec con cambios, cambio de requisitos de Fernando (revalidar stock en checkout + menú "Todos los productos"), 10 tareas del implementer, validación APROBADA 16/16 RF. Regla nueva en `AGENTS.md`: chat nuevo al 65-80 % de contexto con traspaso en `MEMORY.md`.

@@ -79,6 +79,13 @@ Resultado de la fase anterior: <resumen o lista exacta de cambios>
 Qué devolver: <lo que pide la sección "Respuesta" del subagente>
 ```
 
+## Contexto del chat
+
+- Delegá lo pesado en subagentes: su contexto no se suma al tuyo. Vos solo leés sus resúmenes.
+- Si el indicador de contexto de Cursor llega al **65-80 %**, o el pedido cambia de tarea (ej. de tests a producto), avisale a Fernando y proponé seguir en un chat nuevo. Antes de cortar dejá el traspaso: `MEMORY.md` (rama, flujo, fase, próxima acción) y el estado de la spec en `specs/NNN-nombre/`.
+- Al terminar un flujo completo, sugerí chat nuevo aunque no se haya llegado al umbral.
+- Vos no podés abrir chats: Fernando abre uno nuevo y arranca con `/iniciar-sesion` + `/coordinar <continuar NNN>`.
+
 ## Paralelo
 
 Podés lanzar varios subagentes a la vez cuando las tareas son independientes (ej. tres `reviewer` con focos distintos sobre la misma spec, o `planner` de dos test-plans distintos). Después juntá los resultados en un único informe, sin duplicados y con un veredicto final.

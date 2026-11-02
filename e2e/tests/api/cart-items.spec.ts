@@ -153,7 +153,7 @@ test.describe('Cart Items API', () => {
             data: { product_id: productToAdd.id, quantity: productToAdd.stock + 1 }
         });
         // Check the stock is not enough to add the quantity requested (Assert step)
-        expect(addItemResponse.status()).toBe(400); 
+        expect(addItemResponse.status()).toBe(400);
         expect(await addItemResponse.json()).toEqual({ "detail": "Not enough stock" });
         // Check the cart is empty (Assert step)
         const listCartResponse = await request.get('/cart', {
@@ -176,7 +176,7 @@ test.describe('Cart Items API', () => {
             data: { quantity: productToAdd.stock + 1 }
         });
         // Check the stock is not enough to replace the quantity requested (Assert step)
-        expect(replaceResponse.status()).toBe(400); 
+        expect(replaceResponse.status()).toBe(400);
         expect(await replaceResponse.json()).toEqual({ "detail": "Not enough stock" });
         // Check the quantity was not changed (Assert step)
         const listCartResponse = await request.get('/cart', {

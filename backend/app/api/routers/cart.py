@@ -14,6 +14,7 @@ from app.database import get_db
 from app.models import CartItem, Product, User
 from app.schemas import CartItemCreate, CartItemOut, CartItemUpdate, CartOut
 from app.schemas.product import product_to_out
+from app.services.stock import has_enough_stock
 
 router = APIRouter()
 
@@ -26,6 +27,7 @@ def _cart_item_out(row: CartItem) -> CartItemOut:
         quantity=row.quantity,
         product=product_to_out(row.product),
         line_total=line,
+        has_enough_stock=has_enough_stock(row.product.stock, row.quantity),
     )
 
 

@@ -2,12 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { apiFetch } from "../api/client";
 import { FallbackImage } from "../components/FallbackImage";
+import { StockBadge } from "../components/StockBadge";
 import { useAuth } from "../hooks/useAuth";
 import { categorySlugLabel } from "../lib/categoryLabels";
 import { formatPrice } from "../lib/formatPrice";
 import { productImageFallback } from "../lib/imageFallback";
 import { getProductImageUrl } from "../lib/productImage";
 import { loginPathWithNext } from "../lib/redirect";
+import { isOutOfStock } from "../lib/stock";
 import type { Product } from "../types";
 
 export function ProductDetailPage() {
@@ -35,6 +37,7 @@ export function ProductDetailPage() {
   if (error || !data) return <div className="container">Producto no encontrado.</div>;
 
   const img = getProductImageUrl(data);
+  const outOfStock = isOutOfStock(data.stock);
 
   return (
     <div className="container" style={{ maxWidth: "640px", paddingTop: "1.5rem" }}>
@@ -61,18 +64,20 @@ export function ProductDetailPage() {
         {formatPrice(data.price)}
       </p>
       <p style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
-        {data.stock > 0 ? `Stock: ${data.stock}` : "Sin stock"}
+        {outOfStock ? <StockBadge /> : `Stock: ${data.stock}`}
       </p>
       {!isLoggedIn ? (
-        <p style={{ marginTop: "1rem" }}>
-          <Link to={loginPathWithNext(location.pathname)}>Inicia sesión</Link> para añadir al carrito.
-        </p>
+        !outOfStock && (
+          <p style={{ marginTop: "1rem" }}>
+            <Link to={loginPathWithNext(location.pathname)}>Inicia sesión</Link> para añadir al carrito.
+          </p>
+        )
       ) : (
         <button
           type="button"
           className="btn"
           style={{ marginTop: "1rem" }}
-          disabled={data.stock < 1 || add.isPending}
+          disabled={outOfStock || add.isPending}
           onClick={() => add.mutate()}
         >
           {add.isPending ? "Añadiendo…" : "Añadir al carrito"}

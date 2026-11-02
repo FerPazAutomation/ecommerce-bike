@@ -20,6 +20,7 @@ export type CartItem = {
   quantity: number;
   product: Product;
   line_total: string;
+  has_enough_stock: boolean;
 };
 
 export type CartResponse = { items: CartItem[]; subtotal: string };

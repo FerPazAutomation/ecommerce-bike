@@ -148,6 +148,14 @@ button {
   font-size: 0.8rem;
 }
 
+/* Borde y texto en negrita además del color: se distingue también en escala de grises. */
+.badge--stock {
+  border: 1.5px solid #b03a2e;
+  background: #fdecea;
+  color: #8a1c12;
+  font-weight: 700;
+}
+
 .drawer-backdrop {
   position: fixed;
   inset: 0;
@@ -923,6 +931,20 @@ button.landing-cta-btn:hover {
   justify-content: center;
 }
 
+/* `<dialog>` nativo: centrado en la capa superior en lugar del `position: relative` del diálogo de la home. */
+.stock-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  height: fit-content;
+  width: min(420px, calc(100vw - 2rem));
+  color: var(--text);
+}
+
+.stock-dialog::backdrop {
+  background: rgba(15, 20, 25, 0.45);
+}
+
 .landing-gate-dialog__close:hover {
   background: var(--surface);
   color: var(--text);
@@ -1555,6 +1577,10 @@ button.landing-cta-btn:hover {
   font-size: 0.88rem;
   font-weight: 700;
   line-height: 1.25;
+}
+
+.shop-cascos-card-stock {
+  align-self: flex-start;
 }
 
 .shop-cascos-card-price {
