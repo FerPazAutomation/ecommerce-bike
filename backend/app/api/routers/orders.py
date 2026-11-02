@@ -15,6 +15,7 @@ from app.core.config import get_settings
 from app.database import get_db
 from app.models import CartItem, Order, OrderItem, OrderStatus, Product, User
 from app.schemas import CheckoutOut, OrderItemOut, OrderOut, OrderSummaryOut
+from app.services.stock import CHECKOUT_STOCK_DETAIL, has_enough_stock
 
 router = APIRouter()
 
@@ -53,6 +54,12 @@ def create_checkout(
     )
     if not lines:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cart is empty")
+
+    if any(
+        line.product.is_active and not has_enough_stock(line.product.stock, line.quantity)
+        for line in lines
+    ):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=CHECKOUT_STOCK_DETAIL)
 
     total = Decimal("0")
     order_items_data: list[tuple[Product, int, Decimal]] = []

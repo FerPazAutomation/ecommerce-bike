@@ -19,6 +19,7 @@ class CartItemOut(BaseModel):
     quantity: int
     product: ProductOut
     line_total: Decimal
+    has_enough_stock: bool
 
 
 class CartOut(BaseModel):
